@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -100,13 +99,6 @@ function LoginForm() {
       </Button>
       <p className="mt-2 text-center text-[0.7rem] text-subtle">
         {DEMO_CREDENTIALS.email} · {DEMO_CREDENTIALS.password}
-      </p>
-
-      <p className="mt-8 text-center text-sm text-muted">
-        New here?{" "}
-        <Link href="/signup" className="font-semibold text-primary hover:underline">
-          Create an account
-        </Link>
       </p>
     </div>
   );

@@ -76,7 +76,7 @@ or create your own account — demo data is loaded by default so the dashboard i
 ```
 src/
 ├─ app/
-│  ├─ (auth)/                 login + signup (split marketing panel)
+│  ├─ (auth)/                 login (split marketing panel)
 │  ├─ (app)/                  authenticated shell + pages
 │  │  ├─ dashboard/           server-rendered overview + client charts
 │  │  ├─ transactions/        full CRUD, filters, bulk actions

@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/session";
 
-const PUBLIC_PAGES = ["/login", "/signup"];
+const PUBLIC_PAGES = ["/login"];
 const PROTECTED_PREFIXES = [
   "/dashboard",
   "/transactions",
