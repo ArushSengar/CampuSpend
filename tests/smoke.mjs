@@ -193,10 +193,6 @@ async function main() {
     }
 
     if (!isEmpty) {
-      const login = await mod.runLoginFlow();
-      console.log(`\n  login flow       ${login.ok ? "ok" : "FAILED"}\n      ${login.detail}`);
-      if (!login.ok) failures++;
-
       const flow = await mod.runQuickAddFlow();
       console.log(`\n  quick-add flow   ${flow.ok ? "ok" : "FAILED"}\n      ${flow.detail}`);
       if (!flow.ok) failures++;

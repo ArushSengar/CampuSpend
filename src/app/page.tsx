@@ -3,5 +3,7 @@ import { getCurrentUser } from "@/lib/session";
 
 export default async function Home() {
   const user = await getCurrentUser();
-  redirect(user ? "/dashboard" : "/login");
+  // No auth screens right now: the proxy drops guests into the demo account.
+  void user;
+  redirect("/dashboard");
 }

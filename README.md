@@ -14,8 +14,10 @@ npm run setup      # creates .env, runs migrations, seeds demo data
 npm run dev        # http://localhost:3000
 ```
 
-Then either **"Explore the live demo"** on the login screen (`demo@campuspend.app` / `campuspend`)
-or create your own account — demo data is loaded by default so the dashboard is alive immediately.
+Open it and you land straight in the **demo account** (`demo@campuspend.app` / `campuspend`) — five
+months of realistic data, already categorised. The login and signup screens are parked while auth is
+rebuilt; until they return, the proxy signs every visitor into the demo account automatically
+(`src/app/api/auth/demo/route.ts`).
 
 ---
 
@@ -76,7 +78,6 @@ or create your own account — demo data is loaded by default so the dashboard i
 ```
 src/
 ├─ app/
-│  ├─ (auth)/                 login (split marketing panel)
 │  ├─ (app)/                  authenticated shell + pages
 │  │  ├─ dashboard/           server-rendered overview + client charts
 │  │  ├─ transactions/        full CRUD, filters, bulk actions
@@ -115,7 +116,8 @@ happens only at the UI/API boundary in `src/lib/money.ts`.
 
 | Method | Route | Purpose |
 |---|---|---|
-| `POST` | `/api/auth/signup` · `/api/auth/login` · `/api/auth/logout` | session management |
+| `POST` | `/api/auth/signup` · `/api/auth/login` · `/api/auth/logout` | session management (kept — the screens are parked) |
+| `GET` | `/api/auth/demo` | signs you into the demo account (the current front door) |
 | `GET` | `/api/auth/session` | current user |
 | `GET/POST/DELETE` | `/api/transactions` | list (filters, search, sort, paging) · create · bulk delete |
 | `GET/PATCH/DELETE` | `/api/transactions/[id]` | read · update · delete (balances reconciled) |

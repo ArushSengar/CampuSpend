@@ -23,7 +23,6 @@ import { InsightsClient } from "@/app/(app)/insights/insights-client";
 import { RecurringClient } from "@/app/(app)/recurring/recurring-client";
 import { SettingsClient } from "@/app/(app)/settings/settings-client";
 import { TransactionsClient } from "@/app/(app)/transactions/transactions-client";
-import LoginPage from "@/app/(auth)/login/page";
 import type { AppAccount, AppCategory, AppUser } from "@/components/providers/app-data";
 import type { Overview } from "@/lib/overview";
 import { formatMoney, formatMoneyCompact } from "@/lib/money";
@@ -267,77 +266,6 @@ export async function runQuickAddFlow(): Promise<{ ok: boolean; detail: string }
       ? `typed → parsed ₹100 → saved (${cleaned} test row${cleaned === 1 ? "" : "s"} removed)`
       : `save did not settle: ${savedText.slice(0, 200)}`,
   };
-}
-
-/** Clicks "Explore the live demo" on the login screen the way a user would. */
-export async function runLoginFlow(): Promise<{ ok: boolean; detail: string }> {
-  const host = document.createElement("div");
-  document.body.appendChild(host);
-  globalThis.__SMOKE_PUSHES__ = [];
-
-  let root: Root | null = null;
-  await act(async () => {
-    root = createRoot(host);
-    root.render(
-      <ThemeProvider>
-        <ToastProvider>
-          <LoginPage />
-        </ToastProvider>
-      </ThemeProvider>,
-    );
-  });
-  await settle(3);
-
-  const demoButton = byText("button", "Explore the live demo");
-  if (!demoButton) {
-    await act(async () => {
-      root?.unmount();
-    });
-    host.remove();
-    return { ok: false, detail: `demo button missing; page text: ${(host.textContent ?? "").slice(0, 160)}` };
-  }
-
-  await act(async () => {
-    click(demoButton);
-  });
-  await settle(6);
-
-  const pushes = globalThis.__SMOKE_PUSHES__;
-  const text = (host.textContent ?? "").replace(/\s+/g, " ").trim();
-  const errorShown = /doesn't match|Login failed|Demo login failed/i.test(text);
-
-  // now the manual form, with a deliberately wrong password
-  globalThis.__SMOKE_PUSHES__ = [];
-  const inputs = Array.from(host.querySelectorAll("input")) as HTMLInputElement[];
-  if (inputs.length >= 2) {
-    await act(async () => {
-      type(inputs[0], "demo@campuspend.app");
-      type(inputs[1], "definitely-wrong");
-    });
-    await act(async () => {
-      (host.querySelector("form") as HTMLFormElement).dispatchEvent(
-        new window.Event("submit", { bubbles: true, cancelable: true }),
-      );
-    });
-    await settle(6);
-  }
-
-  const afterWrong = (host.textContent ?? "").replace(/\s+/g, " ").trim();
-  const showsError = /doesn't match/i.test(afterWrong);
-  const wrongPushes = globalThis.__SMOKE_PUSHES__.length;
-
-  await act(async () => {
-    root?.unmount();
-  });
-  host.remove();
-
-  if (errorShown) return { ok: false, detail: `demo login reported an error: ${text.slice(0, 200)}` };
-  if (!pushes.includes("/dashboard"))
-    return { ok: false, detail: `demo login did not navigate (pushes: ${JSON.stringify(pushes)})` };
-  if (!showsError) return { ok: false, detail: `wrong password showed no error: ${afterWrong.slice(0, 200)}` };
-  if (wrongPushes > 0) return { ok: false, detail: `navigated anyway on a wrong password` };
-
-  return { ok: true, detail: "demo button → /dashboard; wrong password → inline error, no navigation" };
 }
 
 /** Renders every page for a brand-new account: no data, no crashes. */

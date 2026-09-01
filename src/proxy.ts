@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/session";
 
-const PUBLIC_PAGES = ["/login"];
+const PUBLIC_PAGES: string[] = [];
 const PROTECTED_PREFIXES = [
   "/dashboard",
   "/transactions",
@@ -17,6 +17,10 @@ const PROTECTED_PREFIXES = [
  * Next 16 proxy (formerly middleware). A cheap gate that verifies the signed
  * session cookie so protected pages never render for guests. Data access still
  * re-checks with requireUser() inside every route handler.
+ *
+ * Guests are currently signed into the demo account via /api/auth/demo because
+ * the login and signup screens are parked. Point this back at /login when the
+ * auth screens return.
  */
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -28,7 +32,8 @@ export async function proxy(request: NextRequest) {
   }
 
   if (!userId && PROTECTED_PREFIXES.some((p) => pathname.startsWith(p))) {
-    const url = new URL("/login", request.url);
+    // No login screen yet — sign guests straight into the demo account.
+    const url = new URL("/api/auth/demo", request.url);
     url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);
   }
