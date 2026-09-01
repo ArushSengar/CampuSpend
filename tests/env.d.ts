@@ -6,4 +6,5 @@ declare global {
   var __SMOKE_SEARCH__: string | undefined;
   var __SMOKE_DUMP__: Record<string, string> | undefined;
   var __SMOKE_HTML__: Record<string, string> | undefined;
+  var __SMOKE_PUSHES__: string[];
 }

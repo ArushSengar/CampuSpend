@@ -6,7 +6,9 @@
 
 export function useRouter() {
   return {
-    push: () => {},
+    push: (url: string) => {
+      globalThis.__SMOKE_PUSHES__.push(url);
+    },
     replace: () => {},
     refresh: () => {},
     back: () => {},

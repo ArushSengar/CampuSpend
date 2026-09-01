@@ -163,6 +163,17 @@ and deletes it again. Point it at an account with no data and it switches to an 
 
 ## ⚙️ Configuration
 
+`npm run setup` writes a `.env` for you. Everything has a working default — the app runs fully
+offline with no keys at all.
+
+| Variable | Default | What it does |
+|---|---|---|
+| `DATABASE_URL` | `file:./campuspend.db` | SQLite file. Swap in a Turso/libSQL URL to go hosted. |
+| `AUTH_SECRET` | generated per clone | Signs session JWTs. Regenerating it logs everyone out. |
+| `OPENAI_API_KEY` · `GEMINI_API_KEY` | unset | Optional second pass for messy Hinglish. Offline parser stays in charge. |
+| `COOKIE_SECURE` | auto | `1` forces `Secure; SameSite=None; Partitioned` on the session cookie — needed when the app is served over HTTPS inside an iframe (hosted previews, embedded demos). Unset on plain `http://localhost`, where `SameSite=Lax` is correct. |
+| `DEV_ALLOWED_ORIGINS` | auto | Extra dev hosts to allow, comma-separated. Hosted sandboxes (e2b/Codespaces) are detected automatically. |
+
 `.env` is created for you on first run; `.env.example` documents every knob.
 
 ```env

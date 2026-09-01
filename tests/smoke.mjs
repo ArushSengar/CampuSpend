@@ -111,6 +111,7 @@ function installDom(base) {
     if (window[key] !== undefined) globalThis[key] = window[key];
   }
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+  globalThis.__SMOKE_PUSHES__ = [];
   if (process.env.SMOKE_DUMP) {
     globalThis.__SMOKE_DUMP__ = {};
     globalThis.__SMOKE_HTML__ = {};
@@ -192,6 +193,10 @@ async function main() {
     }
 
     if (!isEmpty) {
+      const login = await mod.runLoginFlow();
+      console.log(`\n  login flow       ${login.ok ? "ok" : "FAILED"}\n      ${login.detail}`);
+      if (!login.ok) failures++;
+
       const flow = await mod.runQuickAddFlow();
       console.log(`\n  quick-add flow   ${flow.ok ? "ok" : "FAILED"}\n      ${flow.detail}`);
       if (!flow.ok) failures++;

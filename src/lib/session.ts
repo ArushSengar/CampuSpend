@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 import { eq } from "drizzle-orm";
 import { db, ensureSchema } from "@/db";
@@ -32,22 +32,56 @@ export async function verifySessionToken(token: string): Promise<string | null> 
   }
 }
 
+/**
+ * Is this request being served over HTTPS? The dev server has no idea when a
+ * TLS-terminating proxy (the Arena preview, ngrok, a load balancer) is in
+ * front of it, so the forwarded protocol is the only reliable signal.
+ */
+async function isSecureRequest(): Promise<boolean> {
+  if (process.env.COOKIE_SECURE === "1") return true;
+  if (process.env.COOKIE_SECURE === "0") return false;
+  try {
+    const forwarded = (await headers()).get("x-forwarded-proto");
+    if (forwarded) return forwarded.split(",")[0].trim() === "https";
+  } catch {
+    // called outside a request scope — fall through to the default
+  }
+  return process.env.NODE_ENV === "production";
+}
+
+/**
+ * Cookie attributes for the session.
+ *
+ * Over plain HTTP (localhost) `SameSite=Lax` is correct and needs no Secure
+ * flag. Over HTTPS the app may be running inside a cross-site iframe — the
+ * Arena preview, an embedded demo — where a Lax cookie is a third-party
+ * cookie and gets dropped, so login silently bounces back to /login.
+ * `SameSite=None; Secure; Partitioned` (CHIPS) is the combination browsers
+ * allow for embedded apps even when third-party cookies are blocked.
+ */
+async function sessionCookieOptions() {
+  const secure = await isSecureRequest();
+  return {
+    httpOnly: true,
+    secure,
+    sameSite: secure ? ("none" as const) : ("lax" as const),
+    partitioned: secure,
+    path: "/",
+    maxAge: MAX_AGE_SECONDS,
+  };
+}
+
 /** Writes the session cookie (server actions / route handlers). */
 export async function createSession(userId: string): Promise<void> {
   const token = await signSessionToken(userId);
   const store = await cookies();
-  store.set(SESSION_COOKIE, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: MAX_AGE_SECONDS,
-  });
+  store.set(SESSION_COOKIE, token, await sessionCookieOptions());
 }
 
 export async function destroySession(): Promise<void> {
   const store = await cookies();
-  store.delete(SESSION_COOKIE);
+  // Same attributes, or the browser won't match the cookie it has to remove.
+  store.set(SESSION_COOKIE, "", { ...(await sessionCookieOptions()), maxAge: 0 });
 }
 
 /** Resolves the signed-in user, or null. Safe to call from any server context. */
