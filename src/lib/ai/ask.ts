@@ -10,6 +10,8 @@ import {
   filterRange,
   incomeIn,
   isExpense,
+  monthProjection,
+  sameDayLastMonth,
   topMerchants,
   type AnalyticsCategory,
   type AnalyticsTxn,
@@ -138,7 +140,7 @@ export function answerQuestion(question: string, ctx: AskContext): AskResult {
     const monthlyBudgetLeft = overall ? overall.limit - expensesIn(txns, { from: startOfMonth(now), to: now }) : buffer;
     const verdict = amount <= monthlyBudgetLeft * 0.5;
     return {
-      answer: `${formatMoney(amount)} is ${verdict ? " comfortable" : " a stretch"} right now. You have ${formatMoney(
+      answer: `${formatMoney(amount)} is ${verdict ? "comfortable" : "a stretch"} right now. You have ${formatMoney(
         monthlyBudgetLeft,
       )} left ${overall ? "against your monthly budget" : "of unspent money"} this month, and it's ${Math.round(
         safePercent(amount, Math.max(1, monthlyBudgetLeft)),
@@ -212,8 +214,9 @@ export function answerQuestion(question: string, ctx: AskContext): AskResult {
     const monthRange = { from: startOfMonth(now), to: now };
     const spend = expensesIn(txns, monthRange);
     const income = monthlyIncome > 0 ? monthlyIncome : incomeIn(txns, monthRange);
-    const daysInMonth = endOfMonth(now).getDate();
-    const projected = Math.round((spend / Math.max(1, now.getDate())) * daysInMonth);
+    // Same ramped projection the dashboard uses: a day-1 rent payment must not
+    // set the trajectory for the whole month.
+    const projected = monthProjection(txns, now);
     const overall = budgets.find((b) => !b.categoryId);
     const limit = overall?.limit ?? income;
     return {
@@ -258,10 +261,18 @@ export function answerQuestion(question: string, ctx: AskContext): AskResult {
   /* --- default: spend for scope --- */
   if (totalSpend > 0 || totalIncome > 0) {
     const prev = resolveRange("last month", now);
-    const prevSpend = expensesIn(
-      txns.filter((t) => (cat ? t.categoryId === cat.id : true) && (merchant ? t.merchant === merchant : true)),
-      prev.range,
+    const prevSource = txns.filter(
+      (t) => (cat ? t.categoryId === cat.id : true) && (merchant ? t.merchant === merchant : true),
     );
+    const isCurrentMonth =
+      range.from.getTime() === startOfMonth(now).getTime() && range.to.getTime() >= now.getTime() - 1000;
+    // A part-month can only be compared with the same slice of last month — and
+    // in the first few days even that is noise, so we stay silent.
+    const prevSpend = isCurrentMonth
+      ? now.getDate() >= 5
+        ? sameDayLastMonth(prevSource, now)
+        : 0
+      : expensesIn(prevSource, prev.range);
     const delta = prevSpend > 0 ? Math.round(((totalSpend - prevSpend) / prevSpend) * 100) : null;
     const share = safePercent(totalSpend, Math.max(1, expensesIn(txns, range)));
     const hasDelta = delta !== null && Math.abs(delta) >= 1;
