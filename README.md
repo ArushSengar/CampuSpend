@@ -141,6 +141,25 @@ happens only at the UI/API boundary in `src/lib/money.ts`.
 | `npm run db:generate` | Regenerate migrations after editing `src/db/schema.ts` |
 | `npm run db:migrate` · `db:seed` · `db:reset` | Migrate · seed demo · drop-and-rebuild |
 | `npm run typecheck` · `npm run lint` | `tsc --noEmit` · ESLint |
+| `npm run smoke` | Render-and-click smoke test (see below) |
+
+### `npm run smoke`
+
+There isn't always a headless browser available, so `tests/smoke.mjs` mounts the **real client
+components** in jsdom against a running dev server and talks to the **real API**. It catches the
+things HTTP status codes can't: render crashes, effects that never settle, data that never reaches
+the DOM, and money formatting mistakes.
+
+```bash
+npm run dev                    # in one terminal
+npm run smoke                  # in another
+SMOKE_DUMP=/tmp/smoke npm run smoke   # also write each page's rendered text to /tmp/smoke
+```
+
+It logs in as the demo user, renders all eight pages, asserts real values appear (the exact
+formatted amounts on the transactions and goals pages, so a rupees/paise mix-up fails loudly),
+then drives the AI bar end to end: types `bought chai rs 100`, parses it, saves the transaction
+and deletes it again. Point it at an account with no data and it switches to an empty-state pass.
 
 ## ⚙️ Configuration
 

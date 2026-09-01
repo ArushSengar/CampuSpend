@@ -102,7 +102,7 @@ export function TransactionRow({
       <div className="shrink-0 text-right">
         <p className={cn("tabular text-sm font-semibold", income ? "text-success" : "text-fg")}>
           {income ? "+" : "−"}
-          {formatMoney(txn.amount)}
+          {formatMoney(txn.amount * 100)}
         </p>
         <p className="text-[0.68rem] text-subtle">{formatTime(txn.occurredAt)}</p>
       </div>

@@ -120,7 +120,9 @@ export function DashboardView({ data }: { data: Overview }) {
           value={formatMoney(data.month.expense)}
           icon={<TrendingUp className="h-3.5 w-3.5" />}
           tone="danger"
-          delta={{ value: monthDelta, label: "vs last month", good: "down" }}
+          delta={
+            data.month.prevSameDay > 0 ? { value: monthDelta, label: "vs last month", good: "down" } : undefined
+          }
           hint={
             data.month.dayOfMonth <= 3
               ? `${data.month.txnCount} so far · ${formatMoney(data.last30.expense)} in the last 30 days`
@@ -332,7 +334,7 @@ export function DashboardView({ data }: { data: Overview }) {
                         <span className="truncate font-medium text-fg">{g.name}</span>
                       </span>
                       <span className="tabular shrink-0 text-muted">
-                        {formatMoneyCompact(g.savedAmount)} / {formatMoneyCompact(g.targetAmount)}
+                        {formatMoneyCompact(g.savedAmount * 100)} / {formatMoneyCompact(g.targetAmount * 100)}
                       </span>
                     </div>
                     <ProgressBar value={pct} tone="success" height={6} />

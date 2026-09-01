@@ -129,7 +129,11 @@ export function InsightsClient() {
           {summary ? (
             <div className="grid gap-3 sm:grid-cols-3">
               <Stat label="Spent this month" value={formatMoney(summary.monthExpense)} />
-              <Stat label="Same point last month" value={formatMoney(summary.prevSameDay)} muted />
+              <Stat
+                label="Same point last month"
+                value={summary.prevSameDay > 0 ? formatMoney(summary.prevSameDay) : "—"}
+                muted
+              />
               <Stat label="Projected month-end" value={formatMoney(summary.projection)} accent />
             </div>
           ) : null}

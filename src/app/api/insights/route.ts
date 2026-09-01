@@ -48,7 +48,8 @@ export async function GET() {
     return NextResponse.json({
       insights,
       monthExpense: expensesIn(txns, monthRange),
-      prevSameDay: sameDayLastMonth(txns, now),
+      // Comparing day-1 of this month with day-1 of last month is noise, not signal.
+      prevSameDay: now.getDate() >= 5 ? sameDayLastMonth(txns, now) : 0,
       projection: monthProjection(txns, now),
     });
   } catch (error) {

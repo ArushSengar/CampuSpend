@@ -356,8 +356,12 @@ export function TransactionsClient() {
                 onToggleSelect={toggleSelect}
                 onEdit={(t) => setEditing(t)}
                 onDelete={(t) => setDeleting(t)}
-                emptyTitle="No transactions match these filters"
-                emptyDescription="Try widening the date range or clearing the search."
+                emptyTitle={activeFilters ? "No transactions match these filters" : "No transactions yet"}
+                emptyDescription={
+                  activeFilters
+                    ? "Try widening the date range or clearing the search."
+                    : "Log your first spend — or just type “chai 20” into the AI bar."
+                }
                 emptyAction={
                   <Button size="sm" variant="secondary" onClick={() => openTransactionForm()}>
                     Add a transaction
