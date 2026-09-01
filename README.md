@@ -8,7 +8,7 @@ Everything runs on your own machine against a local SQLite file. No bank linking
 permissions, no ads, no telemetry.
 
 ```bash
-git clone <your-fork> && cd CampuSpend
+git clone https://github.com/ArushSengar/CampuSpend.git && cd CampuSpend
 npm install
 npm run setup      # creates .env, runs migrations, seeds demo data
 npm run dev        # http://localhost:3000
