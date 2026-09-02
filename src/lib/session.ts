@@ -84,17 +84,41 @@ export async function destroySession(): Promise<void> {
   store.set(SESSION_COOKIE, "", { ...(await sessionCookieOptions()), maxAge: 0 });
 }
 
-/** Resolves the signed-in user, or null. Safe to call from any server context. */
+/**
+ * With the login and signup screens parked there is nobody to sign in, so
+ * every visitor is the demo account and no cookie is required at all. That
+ * also means the app cannot end up in a redirect loop inside a preview
+ * iframe that refuses to store cookies.
+ *
+ * Set DEMO_OPEN_MODE=0 to require a real session again.
+ */
+export function openDemoMode(): boolean {
+  return process.env.DEMO_OPEN_MODE !== "0";
+}
+
+/** The seeded demo account, or null if the database hasn't been seeded. */
+export async function getDemoUser(): Promise<User | null> {
+  await ensureSchema();
+  const [user] = await db.select().from(users).where(eq(users.isDemo, true)).limit(1);
+  return user ?? null;
+}
+
+/** Resolves the signed-in user. Safe to call from any server context. */
 export async function getCurrentUser(): Promise<User | null> {
   try {
     const store = await cookies();
     const token = store.get(SESSION_COOKIE)?.value;
-    if (!token) return null;
-    const userId = await verifySessionToken(token);
-    if (!userId) return null;
-    await ensureSchema();
-    const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
-    return user ?? null;
+    if (token) {
+      const userId = await verifySessionToken(token);
+      if (userId) {
+        await ensureSchema();
+        const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+        if (user) return user;
+      }
+    }
+    // No session, or it expired: fall back to the demo account so the app
+    // still works while there is no way to log in.
+    return openDemoMode() ? await getDemoUser() : null;
   } catch {
     return null;
   }

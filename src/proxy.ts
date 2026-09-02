@@ -1,43 +1,19 @@
-import { NextResponse, type NextRequest } from "next/server";
-import { SESSION_COOKIE, verifySessionToken } from "@/lib/session";
-
-const PUBLIC_PAGES: string[] = [];
-const PROTECTED_PREFIXES = [
-  "/dashboard",
-  "/transactions",
-  "/insights",
-  "/budgets",
-  "/goals",
-  "/recurring",
-  "/accounts",
-  "/settings",
-];
+import { NextResponse } from "next/server";
 
 /**
- * Next 16 proxy (formerly middleware). A cheap gate that verifies the signed
- * session cookie so protected pages never render for guests. Data access still
- * re-checks with requireUser() inside every route handler.
+ * Next 16 proxy (formerly middleware).
  *
- * Guests are currently signed into the demo account via /api/auth/demo because
- * the login and signup screens are parked. Point this back at /login when the
- * auth screens return.
+ * Currently a deliberate pass-through. The login and signup screens are
+ * parked, so guests are resolved to the demo account inside getCurrentUser()
+ * rather than being bounced anywhere — a redirect here would spin forever in
+ * any browser (or embedded preview) that won't store the session cookie.
+ *
+ * When the auth screens come back, this is where the gate goes: verify the
+ * signed session cookie with verifySessionToken() and redirect guests hitting
+ * PROTECTED_PREFIXES to /login?next=<path>. Data access still re-checks with
+ * requireUser() inside every route handler either way.
  */
-export async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const token = request.cookies.get(SESSION_COOKIE)?.value;
-  const userId = token ? await verifySessionToken(token) : null;
-
-  if (PUBLIC_PAGES.includes(pathname)) {
-    return userId ? NextResponse.redirect(new URL("/dashboard", request.url)) : NextResponse.next();
-  }
-
-  if (!userId && PROTECTED_PREFIXES.some((p) => pathname.startsWith(p))) {
-    // No login screen yet — sign guests straight into the demo account.
-    const url = new URL("/api/auth/demo", request.url);
-    url.searchParams.set("next", pathname);
-    return NextResponse.redirect(url);
-  }
-
+export async function proxy() {
   return NextResponse.next();
 }
 

@@ -15,9 +15,13 @@ npm run dev        # http://localhost:3000
 ```
 
 Open it and you land straight in the **demo account** (`demo@campuspend.app` / `campuspend`) — five
-months of realistic data, already categorised. The login and signup screens are parked while auth is
-rebuilt; until they return, the proxy signs every visitor into the demo account automatically
-(`src/app/api/auth/demo/route.ts`).
+months of realistic data, already categorised.
+
+The login and signup screens are parked while auth gets rebuilt. Until they return, the app runs in
+**open demo mode**: with no session cookie, `getCurrentUser()` resolves you to the demo account, so
+the app works with or without cookies — including inside embedded previews that block them. Set
+`DEMO_OPEN_MODE=0` to require a real session again. The `signup` and `login` API routes are kept, so
+rebuilding the screens is a front-end job.
 
 ---
 
@@ -117,7 +121,6 @@ happens only at the UI/API boundary in `src/lib/money.ts`.
 | Method | Route | Purpose |
 |---|---|---|
 | `POST` | `/api/auth/signup` · `/api/auth/login` · `/api/auth/logout` | session management (kept — the screens are parked) |
-| `GET` | `/api/auth/demo` | signs you into the demo account (the current front door) |
 | `GET` | `/api/auth/session` | current user |
 | `GET/POST/DELETE` | `/api/transactions` | list (filters, search, sort, paging) · create · bulk delete |
 | `GET/PATCH/DELETE` | `/api/transactions/[id]` | read · update · delete (balances reconciled) |
@@ -173,6 +176,7 @@ offline with no keys at all.
 | `DATABASE_URL` | `file:./campuspend.db` | SQLite file. Swap in a Turso/libSQL URL to go hosted. |
 | `AUTH_SECRET` | generated per clone | Signs session JWTs. Regenerating it logs everyone out. |
 | `OPENAI_API_KEY` · `GEMINI_API_KEY` | unset | Optional second pass for messy Hinglish. Offline parser stays in charge. |
+| `DEMO_OPEN_MODE` | `1` | `0` requires a signed session again, instead of falling back to the demo account when there is no cookie. |
 | `COOKIE_SECURE` | auto | `1` forces `Secure; SameSite=None; Partitioned` on the session cookie — needed when the app is served over HTTPS inside an iframe (hosted previews, embedded demos). Unset on plain `http://localhost`, where `SameSite=Lax` is correct. |
 | `DEV_ALLOWED_ORIGINS` | auto | Extra dev hosts to allow, comma-separated. Hosted sandboxes (e2b/Codespaces) are detected automatically. |
 
