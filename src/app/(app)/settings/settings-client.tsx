@@ -161,13 +161,13 @@ export function SettingsClient() {
     setDataBusy(true);
     try {
       if (dataAction === "load") {
-        await api.post("/api/seed", { action: "load" });
+        await api.post("/api/demo", { action: "load" });
         toast.success("Demo dataset loaded");
       } else if (dataAction === "reset") {
-        await api.post("/api/seed", { action: "reset" });
+        await api.post("/api/demo", { action: "reset" });
         toast.success("Reset to demo data");
       } else {
-        await api.post("/api/seed", { action: "clear" });
+        await api.post("/api/demo", { action: "clear" });
         toast.success("All data cleared");
       }
       setDataAction(null);

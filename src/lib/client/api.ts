@@ -19,7 +19,17 @@ async function request<T>(method: string, url: string, body?: unknown): Promise<
   });
 
   const text = await res.text();
-  const data = text ? (JSON.parse(text) as unknown) : null;
+  let data: unknown = null;
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      // Body is not JSON (e.g. HTML 404 or 500 error page from server)
+      if (!res.ok) {
+        throw new ApiError(`Server returned status ${res.status}`, res.status);
+      }
+    }
+  }
 
   if (!res.ok) {
     const message =
