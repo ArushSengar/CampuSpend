@@ -14,6 +14,11 @@ try {
 }
 
 async function main() {
+  if (process.env.SKIP_SEED === "1" || process.env.SKIP_SEED === "true") {
+    console.log("→ SKIP_SEED is set; skipping demo data seeding.");
+    process.exit(0);
+  }
+
   await ensurePragmas();
 
   const existing = await db.query.users.findFirst({ where: eq(users.email, DEMO_CREDENTIALS.email) });
