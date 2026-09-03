@@ -164,53 +164,53 @@ export function SplitsClient() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid gap-3.5 sm:grid-cols-3">
-        <Card className="p-4.5">
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-3.5 sm:grid-cols-3">
+        <Card className="p-3.5 sm:p-4.5">
           <div className="flex items-center justify-between">
-            <span className="text-[0.65rem] font-bold uppercase tracking-wider text-subtle">
+            <span className="text-[0.62rem] sm:text-[0.65rem] font-bold uppercase tracking-wider text-subtle truncate">
               You are owed
             </span>
-            <span className="grid h-7 w-7 place-items-center rounded-xl bg-success-soft text-success border border-success/20">
+            <span className="grid h-6.5 w-6.5 sm:h-7 sm:w-7 place-items-center rounded-xl bg-success-soft text-success border border-success/20">
               <ArrowDownLeft className="h-3.5 w-3.5" />
             </span>
           </div>
-          <p className="tabular mt-2 text-2xl font-black tracking-tight text-success">
+          <p className="tabular mt-2 text-xl sm:text-2xl font-black tracking-tight text-success truncate">
             ₹{summary.totalOwedToYou.toLocaleString("en-IN")}
           </p>
-          <p className="mt-1 text-[0.68rem] text-subtle">
+          <p className="mt-1 text-[0.68rem] text-subtle truncate">
             {friends.filter((f) => f.netBalance > 0).length} roommate(s) owe you
           </p>
         </Card>
 
-        <Card className="p-4.5">
+        <Card className="p-3.5 sm:p-4.5">
           <div className="flex items-center justify-between">
-            <span className="text-[0.65rem] font-bold uppercase tracking-wider text-subtle">
+            <span className="text-[0.62rem] sm:text-[0.65rem] font-bold uppercase tracking-wider text-subtle truncate">
               You owe
             </span>
-            <span className="grid h-7 w-7 place-items-center rounded-xl bg-danger-soft text-danger border border-danger/20">
+            <span className="grid h-6.5 w-6.5 sm:h-7 sm:w-7 place-items-center rounded-xl bg-danger-soft text-danger border border-danger/20">
               <ArrowUpRight className="h-3.5 w-3.5" />
             </span>
           </div>
-          <p className="tabular mt-2 text-2xl font-black tracking-tight text-danger">
+          <p className="tabular mt-2 text-xl sm:text-2xl font-black tracking-tight text-danger truncate">
             ₹{summary.totalYouOwe.toLocaleString("en-IN")}
           </p>
-          <p className="mt-1 text-[0.68rem] text-subtle">
+          <p className="mt-1 text-[0.68rem] text-subtle truncate">
             To {friends.filter((f) => f.netBalance < 0).length} roommate(s)
           </p>
         </Card>
 
-        <Card className="p-4.5">
+        <Card className="col-span-2 p-3.5 sm:col-span-1 sm:p-4.5">
           <div className="flex items-center justify-between">
-            <span className="text-[0.65rem] font-bold uppercase tracking-wider text-subtle">
+            <span className="text-[0.62rem] sm:text-[0.65rem] font-bold uppercase tracking-wider text-subtle">
               Net balance
             </span>
-            <span className="grid h-7 w-7 place-items-center rounded-xl bg-primary-soft text-primary border border-primary/20">
+            <span className="grid h-6.5 w-6.5 sm:h-7 sm:w-7 place-items-center rounded-xl bg-primary-soft text-primary border border-primary/20">
               <HandCoins className="h-3.5 w-3.5" />
             </span>
           </div>
           <p
             className={cn(
-              "tabular mt-2 text-2xl font-black tracking-tight",
+              "tabular mt-2 text-xl sm:text-2xl font-black tracking-tight",
               summary.netBalance >= 0 ? "text-fg" : "text-danger",
             )}
           >

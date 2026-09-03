@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Download, LogOut, Menu, Moon, Plus, Sparkles, Sun, Search } from "lucide-react";
-import { Sidebar } from "./nav";
+import { Sidebar, MobileBottomNav } from "./nav";
 import { CommandPalette, useCommandPaletteShortcut, type Action } from "./command-palette";
 import { Button } from "@/components/ui/button";
 import { TransactionForm, emptyDraft, type TxnDraft } from "@/components/transactions/transaction-form";
@@ -116,7 +116,7 @@ export function AppShell({
           {navOpen ? (
             <div className="fixed inset-0 z-[70] lg:hidden">
               <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setNavOpen(false)} />
-              <aside className="animate-fade-up absolute left-0 top-0 h-full w-68 bg-bg border-r border-border">
+              <aside className="animate-fade-up absolute left-0 top-0 h-full w-[82vw] max-w-xs bg-bg border-r border-border shadow-2xl">
                 <Sidebar user={user} month={month} onClose={() => setNavOpen(false)} />
               </aside>
             </div>
@@ -124,18 +124,18 @@ export function AppShell({
 
           <div className="flex min-w-0 flex-1 flex-col">
             {/* Apple style topbar */}
-            <header className="sticky top-0 z-40 border-b border-border/80 bg-surface/80 backdrop-blur-2xl">
-              <div className="flex h-15 items-center gap-3 px-4 sm:px-6">
+            <header className="sticky top-0 z-30 border-b border-border/80 bg-surface/80 backdrop-blur-2xl">
+              <div className="flex h-15 items-center gap-2.5 px-3.5 sm:px-6">
                 <button
                   onClick={() => setNavOpen(true)}
-                  className="grid h-8.5 w-8.5 shrink-0 place-items-center rounded-full border border-border text-muted transition hover:bg-surface-2 hover:text-fg lg:hidden"
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-border text-muted transition hover:bg-surface-2 hover:text-fg lg:hidden pressable"
                   aria-label="Open navigation"
                 >
-                  <Menu className="h-4 w-4" />
+                  <Menu className="h-4.5 w-4.5" />
                 </button>
 
                 <div className="min-w-0 flex-1">
-                  <h1 className="truncate text-base font-bold tracking-tight text-fg">{pageTitle}</h1>
+                  <h1 className="truncate text-sm sm:text-base font-bold tracking-tight text-fg">{pageTitle}</h1>
                 </div>
 
                 {/* Search / Command trigger pill */}
@@ -157,7 +157,7 @@ export function AppShell({
                 <Button
                   size="sm"
                   variant="primary"
-                  className="h-8.5 px-3.5 gap-1.5 text-xs"
+                  className="hidden sm:inline-flex h-8.5 px-3.5 gap-1.5 text-xs"
                   onClick={() => openTransactionForm()}
                 >
                   <Plus className="h-3.5 w-3.5" />
@@ -170,7 +170,7 @@ export function AppShell({
                     router.push("/login");
                     router.refresh();
                   }}
-                  className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-xs font-bold text-white transition hover:opacity-85 shadow-sm"
+                  className="grid h-8.5 w-8.5 shrink-0 place-items-center rounded-full text-xs font-bold text-white transition hover:opacity-85 shadow-sm pressable"
                   style={{
                     background: `linear-gradient(135deg, hsl(${user.avatarHue} 80% 55%), hsl(${user.avatarHue + 40} 75% 50%))`,
                   }}
@@ -182,10 +182,11 @@ export function AppShell({
               </div>
             </header>
 
-            <main className="flex-1 px-4 pb-20 pt-5 sm:px-6 lg:pb-8">{children}</main>
+            <main className="flex-1 px-3.5 pb-28 pt-4 sm:px-6 sm:pb-20 sm:pt-5 lg:pb-8">{children}</main>
           </div>
         </div>
 
+        <MobileBottomNav onLogClick={() => openTransactionForm()} />
         <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} actions={actions} />
         <TransactionForm
           open={txnDraft.open}

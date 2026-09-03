@@ -309,12 +309,12 @@ export function InsightsClient() {
                     Ask questions about your finances in plain language.
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
                   {SUGGESTIONS.map((s) => (
                     <button
                       key={s}
                       onClick={() => void ask(s)}
-                      className="rounded-full border border-border/80 bg-surface-2 px-2.5 py-1 text-xs text-muted transition hover:border-primary/40 hover:bg-primary-soft hover:text-primary pressable"
+                      className="shrink-0 whitespace-nowrap rounded-full border border-border/80 bg-surface-2 px-2.5 py-1 text-xs text-muted transition hover:border-primary/40 hover:bg-primary-soft hover:text-primary pressable"
                     >
                       {s}
                     </button>

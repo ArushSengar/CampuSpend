@@ -120,7 +120,7 @@ export function StatementModal({
           {/* Category Breakdown Table */}
           <div>
             <h4 className="text-xs font-bold text-fg uppercase tracking-wider mb-2">Category Summary</h4>
-            <div className="overflow-hidden rounded-2xl border border-border/80 bg-surface-2/40">
+            <div className="overflow-x-auto no-scrollbar rounded-2xl border border-border/80 bg-surface-2/40">
               <table className="w-full text-left text-xs">
                 <thead className="bg-surface-3/60 text-muted font-bold">
                   <tr>
@@ -161,7 +161,7 @@ export function StatementModal({
               <h4 className="text-xs font-bold text-fg uppercase tracking-wider mb-2">
                 Recent Itemized Outflows
               </h4>
-              <div className="overflow-hidden rounded-2xl border border-border/80 bg-surface-2/40">
+              <div className="overflow-x-auto no-scrollbar rounded-2xl border border-border/80 bg-surface-2/40">
                 <table className="w-full text-left text-xs">
                   <thead className="bg-surface-3/60 text-muted font-bold">
                     <tr>

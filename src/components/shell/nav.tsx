@@ -14,6 +14,7 @@ import {
   Users,
   Zap,
   X,
+  Plus,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 
@@ -153,6 +154,91 @@ export function Sidebar({
             <p className="truncate text-[0.65rem] text-muted">{user.college ?? user.email}</p>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+export function MobileBottomNav({
+  onLogClick,
+}: {
+  onLogClick: () => void;
+}) {
+  const pathname = usePathname();
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border/80 bg-surface/90 backdrop-blur-2xl px-2 pt-1.5 pb-[max(0.65rem,env(safe-area-inset-bottom))] lg:hidden shadow-[0_-4px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_25px_rgba(0,0,0,0.4)]">
+      <div className="mx-auto flex max-w-md items-center justify-around">
+        {/* Home */}
+        <Link
+          href="/dashboard"
+          className={cn(
+            "flex flex-col items-center gap-0.5 rounded-xl px-3 py-1 text-[0.62rem] font-bold transition pressable",
+            pathname === "/dashboard"
+              ? "text-primary font-black"
+              : "text-muted hover:text-fg",
+          )}
+        >
+          <LayoutDashboard className={cn("h-4.5 w-4.5", pathname === "/dashboard" && "stroke-[2.5px]")} />
+          <span>Home</span>
+        </Link>
+
+        {/* Ledger */}
+        <Link
+          href="/transactions"
+          className={cn(
+            "flex flex-col items-center gap-0.5 rounded-xl px-3 py-1 text-[0.62rem] font-bold transition pressable",
+            pathname === "/transactions" || pathname.startsWith("/transactions/")
+              ? "text-primary font-black"
+              : "text-muted hover:text-fg",
+          )}
+        >
+          <Receipt className={cn("h-4.5 w-4.5", (pathname === "/transactions" || pathname.startsWith("/transactions/")) && "stroke-[2.5px]")} />
+          <span>Ledger</span>
+        </Link>
+
+        {/* Center Log (+) Floating Button */}
+        <button
+          type="button"
+          onClick={onLogClick}
+          className="relative -top-2 flex flex-col items-center pressable"
+          aria-label="Log new transaction"
+        >
+          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-primary via-primary to-accent text-white shadow-lg shadow-primary/35 border-2 border-surface transition hover:scale-105 active:scale-95">
+            <Plus className="h-5 w-5 stroke-[2.5px]" />
+          </span>
+          <span className="mt-0.5 text-[0.6rem] font-black tracking-tight text-primary uppercase">
+            Log
+          </span>
+        </button>
+
+        {/* Splits */}
+        <Link
+          href="/splits"
+          className={cn(
+            "flex flex-col items-center gap-0.5 rounded-xl px-3 py-1 text-[0.62rem] font-bold transition pressable",
+            pathname === "/splits" || pathname.startsWith("/splits/")
+              ? "text-primary font-black"
+              : "text-muted hover:text-fg",
+          )}
+        >
+          <Users className={cn("h-4.5 w-4.5", (pathname === "/splits" || pathname.startsWith("/splits/")) && "stroke-[2.5px]")} />
+          <span>Splits</span>
+        </Link>
+
+        {/* AI Coach */}
+        <Link
+          href="/insights"
+          className={cn(
+            "flex flex-col items-center gap-0.5 rounded-xl px-3 py-1 text-[0.62rem] font-bold transition pressable",
+            pathname === "/insights" || pathname.startsWith("/insights/")
+              ? "text-primary font-black"
+              : "text-muted hover:text-fg",
+          )}
+        >
+          <Sparkles className={cn("h-4.5 w-4.5", (pathname === "/insights" || pathname.startsWith("/insights/")) && "stroke-[2.5px]")} />
+          <span>AI Coach</span>
+        </Link>
       </div>
     </div>
   );

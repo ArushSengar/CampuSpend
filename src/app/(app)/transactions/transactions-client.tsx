@@ -190,52 +190,72 @@ export function TransactionsClient() {
       </div>
 
       {/* ---------------- Toolbar ---------------- */}
-      <div className="flex flex-wrap items-center gap-2">
-        <Input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Search entries…"
-          leftIcon={<Search className="h-3.5 w-3.5" />}
-          className="h-9 min-w-[12rem] flex-1 text-xs"
-          rightSlot={
-            q ? (
-              <button onClick={() => setQ("")} className="grid h-6 w-6 place-items-center rounded-full text-subtle hover:text-fg">
-                <X className="h-3.5 w-3.5" />
-              </button>
-            ) : null
-          }
-        />
-        <Segmented size="sm" value={range} onChange={setRange} options={RANGES} />
-        <Select value={sort} onChange={(e) => setSort(e.target.value)} className="h-9 w-28 text-xs">
-          {SORTS.map((s) => (
-            <option key={s.value} value={s.value}>
-              {s.label}
-            </option>
-          ))}
-        </Select>
-        <Button
-          variant={showFilters ? "primary" : "secondary"}
-          size="sm"
-          onClick={() => setShowFilters((v) => !v)}
-          leftIcon={<Filter className="h-3.5 w-3.5" />}
-          className="text-xs"
-        >
-          Filters
-          {activeFilters ? (
-            <span className="ml-1 rounded-full bg-primary-soft px-1.5 text-[0.65rem] font-bold text-primary">•</span>
-          ) : null}
-        </Button>
-        <Button
-          variant="secondary"
-          size="icon-sm"
-          title="Export CSV"
-          onClick={() => downloadFile(`/api/export${qs(filters)}`)}
-        >
-          <Download className="h-3.5 w-3.5" />
-        </Button>
-        <Button size="sm" onClick={() => openTransactionForm()} leftIcon={<Plus className="h-3.5 w-3.5" />} className="text-xs">
-          Add
-        </Button>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="w-full sm:flex-1">
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search entries…"
+            leftIcon={<Search className="h-3.5 w-3.5" />}
+            className="h-9 w-full text-xs"
+            rightSlot={
+              q ? (
+                <button
+                  onClick={() => setQ("")}
+                  className="grid h-6 w-6 place-items-center rounded-full text-subtle hover:text-fg"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              ) : null
+            }
+          />
+        </div>
+
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+          <Segmented size="sm" value={range} onChange={setRange} options={RANGES} />
+          <Select
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            className="h-8.5 w-26 shrink-0 text-xs"
+          >
+            {SORTS.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label}
+              </option>
+            ))}
+          </Select>
+          <Button
+            variant={showFilters ? "primary" : "secondary"}
+            size="sm"
+            onClick={() => setShowFilters((v) => !v)}
+            leftIcon={<Filter className="h-3.5 w-3.5" />}
+            className="shrink-0 text-xs h-8.5"
+          >
+            Filters
+            {activeFilters ? (
+              <span className="ml-1 rounded-full bg-primary-soft px-1.5 text-[0.65rem] font-bold text-primary">
+                •
+              </span>
+            ) : null}
+          </Button>
+          <Button
+            variant="secondary"
+            size="icon-sm"
+            title="Export CSV"
+            className="shrink-0 h-8.5 w-8.5"
+            onClick={() => downloadFile(`/api/export${qs(filters)}`)}
+          >
+            <Download className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => openTransactionForm()}
+            leftIcon={<Plus className="h-3.5 w-3.5" />}
+            className="shrink-0 text-xs h-8.5"
+          >
+            Add
+          </Button>
+        </div>
       </div>
 
       {showFilters ? (

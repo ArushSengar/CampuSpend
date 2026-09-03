@@ -133,7 +133,7 @@ export function DashboardView({ data }: { data: Overview }) {
       </section>
 
       {/* ----------------- KPIs ----------------- */}
-      <section className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid grid-cols-2 gap-2.5 sm:gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard
           label="This Month"
           value={formatMoney(data.month.expense)}

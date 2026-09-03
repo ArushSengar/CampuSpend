@@ -59,7 +59,10 @@ export function Modal({
           size === "lg" && "sm:max-w-2xl",
         )}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
+        {/* Mobile drag handle */}
+        <div className="mx-auto mt-2.5 h-1 w-11 rounded-full bg-border sm:hidden" />
+
+        <div className="flex items-start justify-between gap-4 border-b border-border px-4 py-3.5 sm:px-5 sm:py-4">
           <div className="flex min-w-0 items-start gap-3">
             {icon ? (
               <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">

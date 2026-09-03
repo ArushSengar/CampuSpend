@@ -48,15 +48,15 @@ export function KpiCard({
   const positive = delta ? (delta.good === "down" ? delta.value < 0 : delta.value > 0) : false;
 
   return (
-    <div className="group relative overflow-hidden glass-card p-4.5 hover:border-border transition-all duration-200">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-[0.65rem] font-bold uppercase tracking-wider text-subtle">
+    <div className="group relative overflow-hidden glass-card p-3 sm:p-4.5 hover:border-border transition-all duration-200">
+      <div className="flex items-center justify-between gap-1.5">
+        <span className="truncate text-[0.62rem] sm:text-[0.65rem] font-bold uppercase tracking-wider text-subtle">
           {label}
         </span>
         {icon ? (
           <span
             className={cn(
-              "grid h-7 w-7 place-items-center rounded-xl border shadow-sm",
+              "grid h-6.5 w-6.5 sm:h-7 sm:w-7 shrink-0 place-items-center rounded-xl border shadow-sm",
               tones[tone],
             )}
           >
@@ -65,7 +65,7 @@ export function KpiCard({
         ) : null}
       </div>
 
-      <p className="tabular mt-2 text-2xl font-black leading-none tracking-tight text-fg">
+      <p className="tabular mt-1.5 sm:mt-2 text-xl sm:text-2xl font-black leading-none tracking-tight text-fg truncate">
         {value}
       </p>
 

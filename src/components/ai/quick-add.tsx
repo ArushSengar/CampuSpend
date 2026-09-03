@@ -265,8 +265,8 @@ export function AiQuickAdd({
       />
 
       {!parsed && !parsing && hero ? (
-        <div className="flex flex-wrap items-center gap-1.5 border-t border-border/60 bg-surface-2/30 px-3.5 py-2">
-          <span className="mr-1 text-[0.65rem] font-bold uppercase tracking-wider text-subtle">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar border-t border-border/60 bg-surface-2/30 px-3.5 py-2">
+          <span className="mr-1 shrink-0 text-[0.65rem] font-bold uppercase tracking-wider text-subtle">
             Try
           </span>
           {EXAMPLES.map((ex) => (
@@ -277,7 +277,7 @@ export function AiQuickAdd({
                 setText(ex);
                 void runParse(ex);
               }}
-              className="rounded-full border border-border/70 bg-surface-2/80 px-2.5 py-0.5 text-[0.7rem] font-medium text-muted transition hover:border-primary/40 hover:bg-primary-soft hover:text-primary pressable"
+              className="shrink-0 whitespace-nowrap rounded-full border border-border/70 bg-surface-2/80 px-2.5 py-0.5 text-[0.7rem] font-medium text-muted transition hover:border-primary/40 hover:bg-primary-soft hover:text-primary pressable"
             >
               {ex}
             </button>
