@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "smoke": "node tests/smoke.mjs",
     "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:seed": "tsx scripts/seed.ts",
     "db:reset": "rm -f campuspend.db campuspend.db-journal && npm run db:migrate && npm run db:seed",

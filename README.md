@@ -158,6 +158,45 @@ CampuSpend/
 
 ---
 
+## ☁️ 100% Free Cloud Deployment Guide
+
+CampuSpend is built with **Next.js** and **libSQL (SQLite)**, making it exceptionally cheap and **100% free to host forever** on modern cloud platforms.
+
+### ⭐ Option 1: Vercel + Turso (Recommended — Fastest & 100% Free)
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FArushSengar%2FCampuSpend&env=DATABASE_URL,DATABASE_AUTH_TOKEN,AUTH_SECRET)
+
+1. **Create a Free Turso Database** (Cloud SQLite — Free 9 GB storage, 500 databases, no credit card required):
+   - Sign up at [turso.tech](https://turso.tech) using GitHub.
+   - Click **Create Database** and name it `campuspend`.
+   - Copy the **Database URL** (`libsql://campuspend-yourusername.turso.io`) and generate an **Auth Token**.
+2. **Push Database Schema**:
+   ```bash
+   DATABASE_URL="libsql://campuspend-yourusername.turso.io" DATABASE_AUTH_TOKEN="your-token" npm run db:push
+   ```
+3. **Deploy to Vercel**:
+   - Import your GitHub repository (`ArushSengar/CampuSpend`) on [vercel.com](https://vercel.com).
+   - Under **Environment Variables**, add:
+     - `DATABASE_URL`: Your Turso database URL (`libsql://...`)
+     - `DATABASE_AUTH_TOKEN`: Your Turso auth token
+     - `AUTH_SECRET`: A random 32+ character string (e.g. run `openssl rand -hex 32`)
+     - *(Optional)* `GEMINI_API_KEY`: Free tier Google Gemini API key for advanced AI synthesis.
+   - Click **Deploy**! Your app will be live globally on `https://your-project.vercel.app` with free SSL and edge CDN.
+
+---
+
+### Option 2: Render.com (100% Free Web Service)
+
+1. Sign up at [render.com](https://render.com).
+2. Click **New** → **Web Service** and connect your GitHub repo.
+3. Select **Node** environment:
+   - **Build Command:** `npm run build`
+   - **Start Command:** `npm run start`
+4. Add environment variables from `.env.example`.
+5. Deploy on the free tier.
+
+---
+
 ## 🛠️ Development & Testing
 
 ```bash

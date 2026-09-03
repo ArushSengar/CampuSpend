@@ -28,9 +28,15 @@ export { client, schema };
  * snapshot, and perfectly fast enough for a single-user app.
  */
 export async function ensurePragmas() {
-  await client.execute("PRAGMA foreign_keys = ON");
-  await client.execute("PRAGMA journal_mode = DELETE");
-  await client.execute("PRAGMA synchronous = NORMAL");
+  try {
+    await client.execute("PRAGMA foreign_keys = ON");
+    if (url.startsWith("file:")) {
+      await client.execute("PRAGMA journal_mode = DELETE");
+      await client.execute("PRAGMA synchronous = NORMAL");
+    }
+  } catch (err) {
+    console.warn("[db] pragma execution notice:", err);
+  }
 }
 
 /**
