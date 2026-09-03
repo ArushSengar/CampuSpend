@@ -94,7 +94,7 @@ async function callOpenAI(prompt: string): Promise<LlmExtraction | null> {
 async function callGemini(prompt: string): Promise<LlmExtraction | null> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) return null;
-  const model = process.env.GEMINI_MODEL ?? "gemini-2.0-flash";
+  const model = process.env.GEMINI_MODEL ?? "gemini-3.6-flash";
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
     {
@@ -104,7 +104,7 @@ async function callGemini(prompt: string): Promise<LlmExtraction | null> {
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: { temperature: 0, responseMimeType: "application/json" },
       }),
-      signal: AbortSignal.timeout(9000),
+      signal: AbortSignal.timeout(15000),
     },
   );
   if (!res.ok) return null;
@@ -189,7 +189,7 @@ Question: "${question}"`;
     let raw: string | null = null;
     if (provider === "gemini") {
       const key = process.env.GEMINI_API_KEY;
-      const model = process.env.GEMINI_MODEL ?? "gemini-2.0-flash";
+      const model = process.env.GEMINI_MODEL ?? "gemini-3.6-flash";
       const res = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
         {
@@ -199,7 +199,7 @@ Question: "${question}"`;
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: { temperature: 0.2, responseMimeType: "application/json" },
           }),
-          signal: AbortSignal.timeout(9000),
+          signal: AbortSignal.timeout(20000),
         },
       );
       if (res.ok) {
