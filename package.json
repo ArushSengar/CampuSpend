@@ -8,6 +8,7 @@
     "build": "next build",
     "prebuild": "tsx scripts/ensure-env.ts",
     "start": "next start",
+    "prestart": "npm run setup",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "smoke": "node tests/smoke.mjs",

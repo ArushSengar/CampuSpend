@@ -187,13 +187,16 @@ CampuSpend is built with **Next.js** and **libSQL (SQLite)**, making it exceptio
 
 ### Option 2: Render.com (100% Free Web Service)
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/ArushSengar/CampuSpend)
+
 1. Sign up at [render.com](https://render.com).
-2. Click **New** → **Web Service** and connect your GitHub repo.
-3. Select **Node** environment:
-   - **Build Command:** `npm run build`
+2. Click the **Deploy to Render** button above, or click **New** → **Blueprint** and select `ArushSengar/CampuSpend`.
+3. Render will read `render.yaml` and configure everything automatically:
+   - **Build Command:** `npm install && npm run build`
    - **Start Command:** `npm run start`
-4. Add environment variables from `.env.example`.
-5. Deploy on the free tier.
+   - **Plan:** Free
+4. Enter your `GEMINI_API_KEY` (optional) and click **Apply**.
+5. Your service will be live on `https://campuspend.onrender.com`!
 
 ---
 

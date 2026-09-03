@@ -214,7 +214,10 @@ export async function runQuickAddFlow(): Promise<{ ok: boolean; detail: string }
   await act(async () => {
     click(parseButton);
   });
-  await settle(6);
+  for (let i = 0; i < 30; i++) {
+    await settle(4);
+    if ((host.textContent ?? "").includes("100") && (host.textContent ?? "").includes("Save")) break;
+  }
 
   const parsedText = (host.textContent ?? "").replace(/\s+/g, " ").trim();
   if (!parsedText.includes("100")) {
