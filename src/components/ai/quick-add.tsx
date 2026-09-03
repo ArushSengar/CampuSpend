@@ -2,12 +2,21 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowUpRight, Banknote, Check, Landmark, LoaderCircle, Sparkles, Wallet, X, Zap } from "lucide-react";
+import {
+  ArrowUpRight,
+  Camera,
+  Check,
+  LoaderCircle,
+  Sparkles,
+  X,
+  Zap,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Select, Segmented } from "@/components/ui/input";
 import { Badge } from "@/components/ui/feedback";
 import { useToast } from "@/components/ui/toast";
 import { useAppData } from "@/components/providers/app-data";
+import { ReceiptScannerModal, type ParsedReceipt } from "@/components/ai/receipt-scanner";
 import { api } from "@/lib/client/api";
 import { cn } from "@/lib/cn";
 import { toDateInput } from "@/lib/dates";
@@ -30,18 +39,18 @@ export type ParseResult = {
 
 const EXAMPLES = [
   "chai 20 yesterday",
-  "paid 250 to mess via upi",
+  "mess 250 upi",
   "mom sent 5000",
   "zomato 350 kal",
-  "auto 60 cash aaj",
-  "netflix 199 subscription",
+  "auto 60 cash",
+  "netflix 199",
 ];
 
 const METHODS = [
-  { value: "UPI", label: "UPI", icon: Wallet },
-  { value: "CASH", label: "Cash", icon: Banknote },
-  { value: "CARD", label: "Card", icon: Landmark },
-  { value: "BANK", label: "Bank", icon: Landmark },
+  { value: "UPI", label: "UPI" },
+  { value: "CASH", label: "Cash" },
+  { value: "CARD", label: "Card" },
+  { value: "BANK", label: "Bank" },
 ];
 
 export function AiQuickAdd({
@@ -53,16 +62,26 @@ export function AiQuickAdd({
 }) {
   const router = useRouter();
   const toast = useToast();
-  const { expenseCategories, incomeCategories, accounts, defaultAccountId, categories } = useAppData();
+  const { expenseCategories, incomeCategories, accounts, defaultAccountId, categories } =
+    useAppData();
 
   const [text, setText] = useState("");
   const [parsing, setParsing] = useState(false);
-  const [results, setResults] = useState<(ParseResult & { accountId: string | null; done?: boolean })[]>([]);
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [results, setResults] = useState<
+    (ParseResult & { accountId: string | null; done?: boolean })[]
+  >([]);
   const [engine, setEngine] = useState<string>("local-rules");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const parsed = results.length > 0;
+
+  const handleReceiptExtracted = (receipt: ParsedReceipt) => {
+    const rawSentence = `${receipt.merchant ?? "expense"} ${receipt.amount ?? ""} ${receipt.method.toLowerCase()} today`;
+    setText(rawSentence);
+    void runParse(rawSentence);
+  };
 
   const runParse = async (raw: string) => {
     const value = raw.trim();
@@ -70,7 +89,9 @@ export function AiQuickAdd({
     setParsing(true);
     setError(null);
     try {
-      const data = await api.post<{ results: ParseResult[]; engine: string }>("/api/ai/parse", { text: value });
+      const data = await api.post<{ results: ParseResult[]; engine: string }>("/api/ai/parse", {
+        text: value,
+      });
       setEngine(data.engine);
       setResults(
         data.results.map((r) => ({
@@ -78,7 +99,7 @@ export function AiQuickAdd({
           accountId: accounts.find((a) => a.type === r.method)?.id ?? defaultAccountId,
         })),
       );
-      if (data.results.length === 0) setError("Couldn't read that. Try “chai 20 yesterday”.");
+      if (data.results.length === 0) setError("Could not parse. Try “chai 20 yesterday”.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Parsing failed");
     } finally {
@@ -95,7 +116,7 @@ export function AiQuickAdd({
   const saveAll = async () => {
     const valid = results.filter((r) => (r.amount ?? 0) > 0);
     if (!valid.length) {
-      setError("Add an amount before saving.");
+      setError("Please add an amount.");
       return;
     }
     let saved = 0;
@@ -118,15 +139,12 @@ export function AiQuickAdd({
         saved += 1;
         setResults((prev) => prev.map((x) => (x === r ? { ...x, done: true } : x)));
       } catch (e) {
-        toast.error("Couldn't save one entry", e instanceof Error ? e.message : undefined);
+        toast.error("Save failed", e instanceof Error ? e.message : undefined);
         setResults((prev) => prev.map((x) => (x === r ? { ...x } : x)));
       }
     }
     if (saved > 0) {
-      toast.success(
-        saved === 1 ? "Saved 1 transaction" : `Saved ${saved} transactions`,
-        "Filed automatically by the AI parser.",
-      );
+      toast.success(saved === 1 ? "Logged 1 entry" : `Logged ${saved} entries`);
       setText("");
       setResults([]);
       startTransition(() => {
@@ -141,8 +159,7 @@ export function AiQuickAdd({
   return (
     <div
       className={cn(
-        "rounded-card border border-border bg-surface/80 backdrop-blur",
-        hero ? "shadow-card" : "",
+        "rounded-3xl border border-border/80 bg-surface/85 backdrop-blur-2xl shadow-card transition-all duration-200 overflow-hidden",
       )}
     >
       <form
@@ -151,51 +168,100 @@ export function AiQuickAdd({
           if (!parsed) void runParse(text);
           else void saveAll();
         }}
-        className={cn("flex items-center gap-2", hero ? "p-2.5" : "p-1.5")}
+        className={cn("flex items-center gap-2.5", hero ? "p-3" : "p-2")}
       >
         <span
           className={cn(
-            "grid shrink-0 place-items-center rounded-xl bg-gradient-to-br from-primary to-accent text-white",
-            hero ? "h-10 w-10" : "h-8 w-8",
+            "grid shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-primary to-accent text-white shadow-md shadow-primary/20",
+            hero ? "h-9.5 w-9.5" : "h-8 w-8",
           )}
         >
-          {parsing ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+          {parsing ? (
+            <LoaderCircle className="h-4 w-4 animate-spin" />
+          ) : (
+            <Sparkles className="h-4 w-4" />
+          )}
         </span>
+
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !parsed) e.preventDefault();
           }}
-          placeholder="Say it naturally — “bought chai rs 100”, “auto 50 cash yesterday”"
-          aria-label="Describe a transaction in plain language"
+          placeholder="Natural input — “chai 20”, “zomato 350 yesterday”, “mom sent 5000”"
+          aria-label="Describe a transaction"
           className={cn(
-            "min-w-0 flex-1 bg-transparent text-fg placeholder:text-subtle focus:outline-none",
-            hero ? "h-10 text-[0.95rem]" : "h-8 text-sm",
+            "min-w-0 flex-1 bg-transparent text-fg font-medium placeholder:text-subtle focus:outline-none",
+            hero ? "h-9.5 text-sm" : "h-8 text-xs",
           )}
         />
+
+        {!text && !parsed ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={() => setScannerOpen(true)}
+            className="flex items-center gap-1.5 text-muted hover:text-fg text-xs"
+            title="Scan bill or UPI screenshot"
+          >
+            <Camera className="h-3.5 w-3.5 text-primary" />
+            <span className="hidden sm:inline">Scan Bill</span>
+          </Button>
+        ) : null}
+
         {text && !parsed ? (
-          <Button type="button" size={hero ? "md" : "sm"} variant="primary" onClick={() => runParse(text)} loading={parsing}>
-            <Zap className="h-4 w-4" />
+          <Button
+            type="button"
+            size="sm"
+            variant="primary"
+            onClick={() => runParse(text)}
+            loading={parsing}
+            className="h-8.5 px-4 text-xs font-semibold"
+          >
+            <Zap className="h-3.5 w-3.5" />
             Parse
           </Button>
         ) : null}
+
         {parsed ? (
-          <>
-            <Button type="button" size={hero ? "md" : "sm"} variant="ghost" onClick={() => setResults([])}>
+          <div className="flex items-center gap-1.5">
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => setResults([])}
+              className="text-xs"
+            >
               Reset
             </Button>
-            <Button type="button" size={hero ? "md" : "sm"} variant="success" onClick={saveAll} loading={pending}>
-              <Check className="h-4 w-4" />
+            <Button
+              type="button"
+              size="sm"
+              variant="success"
+              onClick={saveAll}
+              loading={pending}
+              className="h-8.5 px-4 text-xs font-semibold"
+            >
+              <Check className="h-3.5 w-3.5" />
               Save {results.length > 1 ? results.length : ""}
             </Button>
-          </>
+          </div>
         ) : null}
       </form>
 
-      {!parsed && !parsing ? (
-        <div className={cn("flex flex-wrap items-center gap-1.5 border-t border-border px-3 py-2.5", hero ? "" : "hidden")}>
-          <span className="mr-1 text-[0.7rem] font-medium uppercase tracking-wider text-subtle">Try</span>
+      <ReceiptScannerModal
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onExtracted={handleReceiptExtracted}
+      />
+
+      {!parsed && !parsing && hero ? (
+        <div className="flex flex-wrap items-center gap-1.5 border-t border-border/60 bg-surface-2/30 px-3.5 py-2">
+          <span className="mr-1 text-[0.65rem] font-bold uppercase tracking-wider text-subtle">
+            Try
+          </span>
           {EXAMPLES.map((ex) => (
             <button
               key={ex}
@@ -204,7 +270,7 @@ export function AiQuickAdd({
                 setText(ex);
                 void runParse(ex);
               }}
-              className="rounded-full border border-border bg-surface-2 px-2.5 py-1 text-xs text-muted transition hover:border-primary/40 hover:bg-primary-soft hover:text-primary"
+              className="rounded-full border border-border/70 bg-surface-2/80 px-2.5 py-0.5 text-[0.7rem] font-medium text-muted transition hover:border-primary/40 hover:bg-primary-soft hover:text-primary pressable"
             >
               {ex}
             </button>
@@ -212,17 +278,22 @@ export function AiQuickAdd({
         </div>
       ) : null}
 
-      {error ? <p className="border-t border-border px-4 py-2 text-xs text-danger">{error}</p> : null}
+      {error ? (
+        <p className="border-t border-border/60 px-4 py-2 text-xs font-medium text-danger">
+          {error}
+        </p>
+      ) : null}
 
       {parsed ? (
-        <div className="space-y-2 border-t border-border p-3">
+        <div className="space-y-2 border-t border-border/60 p-3.5 bg-surface-2/20">
           <div className="flex items-center justify-between px-1">
-            <p className="flex items-center gap-2 text-[0.7rem] font-semibold uppercase tracking-wider text-subtle">
+            <p className="flex items-center gap-1.5 text-[0.65rem] font-bold uppercase tracking-wider text-subtle">
               <Sparkles className="h-3 w-3 text-primary" />
-              {results.length} parsed · {engine === "llm+rules" ? "LLM + rules" : "offline engine"}
+              {results.length} entry parsed · {engine === "llm+rules" ? "AI + Rules" : "Offline"}
             </p>
-            <p className="text-[0.7rem] text-subtle">Edit anything, then save</p>
+            <p className="text-[0.65rem] text-subtle">Tap to edit before saving</p>
           </div>
+
           {results.map((r, i) => {
             const cat = categories.find((c) => c.id === r.categoryId);
             const list = r.type === "INCOME" ? incomeCategories : expenseCategories;
@@ -230,16 +301,16 @@ export function AiQuickAdd({
               <div
                 key={`${r.rawText}-${i}`}
                 className={cn(
-                  "animate-fade-up rounded-xl border bg-surface-2/60 p-3 transition",
-                  r.done ? "border-success/40 opacity-60" : "border-border",
+                  "animate-fade-up rounded-2xl border bg-surface/90 backdrop-blur p-3 transition",
+                  r.done ? "border-success/50 opacity-60" : "border-border/80 shadow-sm",
                 )}
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="flex items-center gap-1.5">
                     <span
                       className={cn(
-                        "grid h-8 w-8 place-items-center rounded-lg text-base",
-                        r.type === "INCOME" ? "bg-success-soft" : "bg-surface-3",
+                        "grid h-8 w-8 place-items-center rounded-xl text-sm shadow-sm",
+                        r.type === "INCOME" ? "bg-success-soft" : "bg-surface-2",
                       )}
                     >
                       {cat?.emoji ?? (r.type === "INCOME" ? "💰" : "🧾")}
@@ -249,9 +320,11 @@ export function AiQuickAdd({
                       step="0.01"
                       min="0"
                       value={r.amount ?? ""}
-                      onChange={(e) => update(i, { amount: e.target.value ? Number(e.target.value) : null })}
-                      className="h-8 w-24 tabular text-sm font-semibold"
-                      leftIcon={<span className="text-xs text-subtle">₹</span>}
+                      onChange={(e) =>
+                        update(i, { amount: e.target.value ? Number(e.target.value) : null })
+                      }
+                      className="h-8.5 w-24 tabular text-xs font-bold"
+                      leftIcon={<span className="text-xs font-semibold text-subtle">₹</span>}
                     />
                   </div>
 
@@ -273,13 +346,21 @@ export function AiQuickAdd({
                   />
 
                   <div className="ml-auto flex items-center gap-2">
-                    <Badge tone={r.confidence >= 0.8 ? "success" : r.confidence >= 0.6 ? "warning" : "neutral"}>
-                      {Math.round(r.confidence * 100)}% sure
+                    <Badge
+                      tone={
+                        r.confidence >= 0.8
+                          ? "success"
+                          : r.confidence >= 0.6
+                            ? "warning"
+                            : "neutral"
+                      }
+                    >
+                      {Math.round(r.confidence * 100)}%
                     </Badge>
                     <button
                       type="button"
                       onClick={() => removeDraft(i)}
-                      className="grid h-7 w-7 place-items-center rounded-lg text-subtle transition hover:bg-surface-3 hover:text-danger"
+                      className="grid h-7 w-7 place-items-center rounded-full text-subtle transition hover:bg-surface-3 hover:text-danger pressable"
                       aria-label="Remove"
                     >
                       <X className="h-3.5 w-3.5" />
@@ -287,13 +368,13 @@ export function AiQuickAdd({
                   </div>
                 </div>
 
-                <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                <div className="mt-2.5 grid gap-2 sm:grid-cols-3">
                   <Select
                     value={r.categoryId ?? ""}
                     onChange={(e) => update(i, { categoryId: e.target.value || null })}
-                    className="h-9 text-sm"
+                    className="h-8.5 text-xs"
                   >
-                    <option value="">No category</option>
+                    <option value="">Select Category</option>
                     {list.map((c) => (
                       <option key={c.id} value={c.id}>
                         {c.emoji} {c.name}
@@ -303,14 +384,18 @@ export function AiQuickAdd({
                   <Input
                     value={r.merchant ?? ""}
                     onChange={(e) => update(i, { merchant: e.target.value })}
-                    placeholder="Merchant"
-                    className="h-9 text-sm"
+                    placeholder="Merchant / Place"
+                    className="h-8.5 text-xs"
                   />
                   <Input
                     type="date"
                     value={toDateInput(r.occurredAt)}
-                    onChange={(e) => update(i, { occurredAt: new Date(`${e.target.value}T12:00:00`).toISOString() })}
-                    className="h-9 text-sm"
+                    onChange={(e) =>
+                      update(i, {
+                        occurredAt: new Date(`${e.target.value}T12:00:00`).toISOString(),
+                      })
+                    }
+                    className="h-8.5 text-xs"
                   />
                 </div>
 
@@ -319,17 +404,17 @@ export function AiQuickAdd({
                     value={r.note}
                     onChange={(e) => update(i, { note: e.target.value })}
                     placeholder="Note"
-                    className="mt-2 h-9 text-sm"
+                    className="mt-2 h-8.5 text-xs"
                   />
                 ) : null}
 
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {r.reasons.slice(0, 4).map((reason) => (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {r.reasons.slice(0, 3).map((reason) => (
                     <span
                       key={reason}
-                      className="inline-flex items-center gap-1 rounded-md bg-surface-3 px-1.5 py-0.5 text-[0.65rem] text-muted"
+                      className="inline-flex items-center gap-1 rounded-full bg-surface-2 px-2 py-0.5 text-[0.65rem] text-muted"
                     >
-                      <ArrowUpRight className="h-2.5 w-2.5" />
+                      <ArrowUpRight className="h-2.5 w-2.5 text-primary" />
                       {reason}
                     </span>
                   ))}

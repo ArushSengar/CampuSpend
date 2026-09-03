@@ -22,6 +22,8 @@ import {
   sameDayLastMonth,
   topMerchants,
   weekdayVsWeekend,
+  calculateFinancialHealthScore,
+  evaluateBadges,
 } from "@/lib/analytics";
 import { buildInsights } from "@/lib/ai/insights";
 import { serializeAccount, serializeGoal, serializeRecurring, serializeTxn } from "@/lib/serialize";
@@ -115,6 +117,19 @@ export async function buildOverview(userId: string, userName: string, monthlyInc
     weekdayVsWeekend: weekdayVsWeekend(txns, monthRange),
     streak: loggingStreak(txns, now),
     budgets: budgetStatus,
+    financialHealth: calculateFinancialHealthScore({
+      txns,
+      budgets: budgetStatus,
+      monthlyIncome,
+      monthExpense,
+      monthIncome,
+      now,
+    }),
+    badges: evaluateBadges({
+      txns,
+      goals,
+      streak: loggingStreak(txns, now),
+    }),
     goals: goals.map(serializeGoal),
     accounts: accounts.map(serializeAccount),
     recurring: recurrings.slice(0, 5).map(serializeRecurring),

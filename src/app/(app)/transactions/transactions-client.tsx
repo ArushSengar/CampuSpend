@@ -32,20 +32,20 @@ import { formatMoney } from "@/lib/money";
 import { startOfMonth } from "@/lib/dates";
 import { cn } from "@/lib/cn";
 
-type RangeKey = "month" | "last30" | "last90" | "all" | "custom";
+type RangeKey = "month" | "last30" | "last90" | "all";
 
 const RANGES: { value: RangeKey; label: string }[] = [
-  { value: "month", label: "This month" },
-  { value: "last30", label: "30 days" },
-  { value: "last90", label: "90 days" },
-  { value: "all", label: "All time" },
+  { value: "month", label: "This Month" },
+  { value: "last30", label: "30 Days" },
+  { value: "last90", label: "90 Days" },
+  { value: "all", label: "All" },
 ];
 
 const SORTS = [
   { value: "recent", label: "Newest" },
   { value: "oldest", label: "Oldest" },
-  { value: "largest", label: "Largest" },
-  { value: "smallest", label: "Smallest" },
+  { value: "largest", label: "Highest" },
+  { value: "smallest", label: "Lowest" },
 ];
 
 const EMPTY_PAGE: { transactions: TxnDTO[]; total: number } = { transactions: [], total: 0 };
@@ -61,7 +61,7 @@ export function TransactionsClient() {
   const [total, setTotal] = useState(0);
 
   const [q, setQ] = useState("");
-  const debouncedQ = useDebounce(q, 320);
+  const debouncedQ = useDebounce(q, 300);
   const [range, setRange] = useState<RangeKey>("month");
   const [type, setType] = useState<"ALL" | "EXPENSE" | "INCOME">("ALL");
   const [method, setMethod] = useState("ALL");
@@ -112,8 +112,6 @@ export function TransactionsClient() {
     EMPTY_PAGE,
   );
 
-  // Adopt server data during render (the sanctioned "adjust state on prop
-  // change" pattern) so optimistic edits below stay authoritative.
   const [syncedKey, setSyncedKey] = useState<string | null>(null);
   if (!loading && syncedKey !== query && !fetchError) {
     setSyncedKey(query);
@@ -133,8 +131,6 @@ export function TransactionsClient() {
     }
     return { expense, income, net: income - expense };
   }, [items]);
-
-  /* ------------------------------ optimistic ops ----------------------------- */
 
   const removeTxn = async (t: TxnDTO) => {
     const snapshot = items;
@@ -165,7 +161,7 @@ export function TransactionsClient() {
     setBulkDeleting(true);
     try {
       await api.del(`/api/transactions?ids=${ids.join(",")}`);
-      toast.success(`Deleted ${ids.length} transactions`);
+      toast.success(`Deleted ${ids.length} entries`);
       router.refresh();
     } catch (e) {
       setItems(snapshot);
@@ -193,24 +189,24 @@ export function TransactionsClient() {
         <AiQuickAdd variant="compact" onSaved={() => void load()} />
       </div>
 
-      {/* -------------------------------- toolbar ------------------------------- */}
+      {/* ---------------- Toolbar ---------------- */}
       <div className="flex flex-wrap items-center gap-2">
         <Input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search merchant, note, category…"
-          leftIcon={<Search className="h-4 w-4" />}
-          className="h-10 min-w-[12rem] flex-1"
+          placeholder="Search entries…"
+          leftIcon={<Search className="h-3.5 w-3.5" />}
+          className="h-9 min-w-[12rem] flex-1 text-xs"
           rightSlot={
             q ? (
-              <button onClick={() => setQ("")} className="grid h-6 w-6 place-items-center rounded text-subtle hover:text-fg">
+              <button onClick={() => setQ("")} className="grid h-6 w-6 place-items-center rounded-full text-subtle hover:text-fg">
                 <X className="h-3.5 w-3.5" />
               </button>
             ) : null
           }
         />
-        <Segmented value={range} onChange={setRange} options={RANGES} />
-        <Select value={sort} onChange={(e) => setSort(e.target.value)} className="h-10 w-32">
+        <Segmented size="sm" value={range} onChange={setRange} options={RANGES} />
+        <Select value={sort} onChange={(e) => setSort(e.target.value)} className="h-9 w-28 text-xs">
           {SORTS.map((s) => (
             <option key={s.value} value={s.value}>
               {s.label}
@@ -219,18 +215,25 @@ export function TransactionsClient() {
         </Select>
         <Button
           variant={showFilters ? "primary" : "secondary"}
+          size="sm"
           onClick={() => setShowFilters((v) => !v)}
-          leftIcon={<Filter className="h-4 w-4" />}
+          leftIcon={<Filter className="h-3.5 w-3.5" />}
+          className="text-xs"
         >
           Filters
           {activeFilters ? (
             <span className="ml-1 rounded-full bg-primary-soft px-1.5 text-[0.65rem] font-bold text-primary">•</span>
           ) : null}
         </Button>
-        <Button variant="secondary" size="icon" title="Export CSV" onClick={() => downloadFile(`/api/export${qs(filters)}`)}>
-          <Download className="h-4 w-4" />
+        <Button
+          variant="secondary"
+          size="icon-sm"
+          title="Export CSV"
+          onClick={() => downloadFile(`/api/export${qs(filters)}`)}
+        >
+          <Download className="h-3.5 w-3.5" />
         </Button>
-        <Button onClick={() => openTransactionForm()} leftIcon={<Plus className="h-4 w-4" />}>
+        <Button size="sm" onClick={() => openTransactionForm()} leftIcon={<Plus className="h-3.5 w-3.5" />} className="text-xs">
           Add
         </Button>
       </div>
@@ -238,8 +241,9 @@ export function TransactionsClient() {
       {showFilters ? (
         <Card className="animate-fade-up grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <p className="mb-1.5 text-xs font-medium text-muted">Type</p>
+            <p className="mb-1.5 text-xs font-bold text-muted uppercase tracking-wider">Type</p>
             <Segmented
+              size="sm"
               value={type}
               onChange={setType}
               options={[
@@ -250,8 +254,8 @@ export function TransactionsClient() {
             />
           </div>
           <div>
-            <p className="mb-1.5 text-xs font-medium text-muted">Method</p>
-            <Select value={method} onChange={(e) => setMethod(e.target.value)} className="h-9">
+            <p className="mb-1.5 text-xs font-bold text-muted uppercase tracking-wider">Method</p>
+            <Select value={method} onChange={(e) => setMethod(e.target.value)} className="h-8.5 text-xs">
               <option value="ALL">All methods</option>
               <option value="UPI">UPI</option>
               <option value="CASH">Cash</option>
@@ -260,8 +264,8 @@ export function TransactionsClient() {
             </Select>
           </div>
           <div>
-            <p className="mb-1.5 text-xs font-medium text-muted">Category</p>
-            <Select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="h-9">
+            <p className="mb-1.5 text-xs font-bold text-muted uppercase tracking-wider">Category</p>
+            <Select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="h-8.5 text-xs">
               <option value="ALL">All categories</option>
               {expenseCategories.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -271,8 +275,8 @@ export function TransactionsClient() {
             </Select>
           </div>
           <div>
-            <p className="mb-1.5 text-xs font-medium text-muted">Account</p>
-            <Select value={accountId} onChange={(e) => setAccountId(e.target.value)} className="h-9">
+            <p className="mb-1.5 text-xs font-bold text-muted uppercase tracking-wider">Account</p>
+            <Select value={accountId} onChange={(e) => setAccountId(e.target.value)} className="h-8.5 text-xs">
               <option value="ALL">All accounts</option>
               {accounts.map((a) => (
                 <option key={a.id} value={a.id}>
@@ -284,25 +288,25 @@ export function TransactionsClient() {
         </Card>
       ) : null}
 
-      {/* -------------------------------- summary ------------------------------- */}
-      <div className="flex flex-wrap items-center gap-3 rounded-card border border-border bg-surface px-4 py-3">
-        <div className="flex items-center gap-2 text-sm">
-          <Receipt className="h-4 w-4 text-subtle" />
-          <span className="tabular font-semibold text-fg">{total}</span>
-          <span className="text-muted">transactions</span>
+      {/* ---------------- Summary Pill Ribbon ---------------- */}
+      <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border/80 bg-surface/85 backdrop-blur-xl px-4 py-2.5 shadow-sm">
+        <div className="flex items-center gap-2 text-xs">
+          <Receipt className="h-3.5 w-3.5 text-subtle" />
+          <span className="tabular font-black text-fg">{total}</span>
+          <span className="text-muted">entries</span>
         </div>
-        <span className="h-4 w-px bg-border" />
-        <div className="text-sm">
+        <span className="h-3.5 w-px bg-border" />
+        <div className="text-xs">
           <span className="text-muted">Out </span>
-          <span className="tabular font-semibold text-danger">{formatMoney(totals.expense * 100)}</span>
+          <span className="tabular font-black text-danger">{formatMoney(totals.expense * 100)}</span>
         </div>
-        <div className="text-sm">
+        <div className="text-xs">
           <span className="text-muted">In </span>
-          <span className="tabular font-semibold text-success">{formatMoney(totals.income * 100)}</span>
+          <span className="tabular font-black text-success">{formatMoney(totals.income * 100)}</span>
         </div>
-        <div className="text-sm">
+        <div className="text-xs">
           <span className="text-muted">Net </span>
-          <span className={cn("tabular font-semibold", totals.net >= 0 ? "text-success" : "text-danger")}>
+          <span className={cn("tabular font-black", totals.net >= 0 ? "text-success" : "text-danger")}>
             {formatMoney(Math.abs(totals.net) * 100)}
           </span>
         </div>
@@ -313,32 +317,32 @@ export function TransactionsClient() {
             <Button size="xs" variant="ghost" onClick={() => setSelected(new Set())}>
               Clear
             </Button>
-            <Button size="xs" variant="danger" onClick={() => setConfirmBulk(true)} loading={bulkDeleting} leftIcon={<Trash2 className="h-3.5 w-3.5" />}>
+            <Button size="xs" variant="danger" onClick={() => setConfirmBulk(true)} loading={bulkDeleting} leftIcon={<Trash2 className="h-3 w-3" />}>
               Delete
             </Button>
           </div>
         ) : null}
       </div>
 
-      {/* ---------------------------------- list -------------------------------- */}
+      {/* ---------------- List ---------------- */}
       <Card className="overflow-hidden">
         {loading ? (
-          <div className="divide-y divide-border">
-            {Array.from({ length: 8 }).map((_, i) => (
+          <div className="divide-y divide-border/60">
+            {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="flex items-center gap-3 px-4 py-3">
-                <Skeleton className="h-9 w-9 rounded-xl" />
+                <Skeleton className="h-8 w-8 rounded-xl" />
                 <div className="flex-1 space-y-1.5">
-                  <Skeleton className="h-3 w-40" />
-                  <Skeleton className="h-2.5 w-28" />
+                  <Skeleton className="h-3 w-36 rounded-full" />
+                  <Skeleton className="h-2 w-24 rounded-full" />
                 </div>
-                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-3 w-16 rounded-full" />
               </div>
             ))}
           </div>
         ) : error ? (
           <EmptyState
             icon={<SearchX className="h-5 w-5" />}
-            title="Couldn't load transactions"
+            title="Could not load entries"
             description={error}
             action={
               <Button size="sm" variant="secondary" onClick={() => void load()}>
@@ -348,7 +352,7 @@ export function TransactionsClient() {
           />
         ) : (
           <>
-            <div className="max-h-[62vh] overflow-y-auto">
+            <div className="max-h-[60vh] overflow-y-auto">
               <TransactionFeed
                 transactions={items}
                 pendingIds={pendingIds}
@@ -356,42 +360,42 @@ export function TransactionsClient() {
                 onToggleSelect={toggleSelect}
                 onEdit={(t) => setEditing(t)}
                 onDelete={(t) => setDeleting(t)}
-                emptyTitle={activeFilters ? "No transactions match these filters" : "No transactions yet"}
+                emptyTitle={activeFilters ? "No matching entries" : "No entries yet"}
                 emptyDescription={
                   activeFilters
-                    ? "Try widening the date range or clearing the search."
-                    : "Log your first spend — or just type “chai 20” into the AI bar."
+                    ? "Try adjusting filters or clearing search."
+                    : "Log an expense or type “chai 20” above."
                 }
                 emptyAction={
                   <Button size="sm" variant="secondary" onClick={() => openTransactionForm()}>
-                    Add a transaction
+                    Log Spend
                   </Button>
                 }
               />
             </div>
 
             {items.length < total ? (
-              <div className="border-t border-border p-3 text-center">
+              <div className="border-t border-border/60 p-3 text-center">
                 <Button
                   variant="secondary"
                   size="sm"
                   loading={loadingMore}
                   onClick={() => setLimit((l) => l + 40)}
-                  leftIcon={loadingMore ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                  leftIcon={loadingMore ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+                  className="text-xs"
                 >
                   Load {Math.min(40, total - items.length)} more
                 </Button>
               </div>
             ) : items.length > 0 ? (
-              <p className="border-t border-border py-3 text-center text-xs text-subtle">
-                That&apos;s everything — {total} transaction{total === 1 ? "" : "s"}.
+              <p className="border-t border-border/60 py-3 text-center text-[0.7rem] text-subtle">
+                {total} transaction{total === 1 ? "" : "s"} total.
               </p>
             ) : null}
           </>
         )}
       </Card>
 
-      {/* --------------------------------- dialogs ------------------------------ */}
       <TransactionForm
         open={Boolean(editing)}
         draft={editing ? draftFromTxn(editing) : null}
@@ -411,8 +415,8 @@ export function TransactionsClient() {
           setDeleting(null);
           if (target) await removeTxn(target);
         }}
-        title="Delete this transaction?"
-        message={`${deleting?.merchant ?? "This entry"} · ${formatMoney((deleting?.amount ?? 0) * 100)} will be removed and the wallet balance restored.`}
+        title="Delete entry?"
+        message={`${deleting?.merchant ?? "This entry"} · ${formatMoney((deleting?.amount ?? 0) * 100)} will be deleted and account balance restored.`}
       />
 
       <ConfirmDialog
@@ -420,8 +424,8 @@ export function TransactionsClient() {
         onClose={() => setConfirmBulk(false)}
         onConfirm={bulkDelete}
         loading={bulkDeleting}
-        title={`Delete ${selected.size} transactions?`}
-        message="This can't be undone. Balances will be restored automatically."
+        title={`Delete ${selected.size} entries?`}
+        message="Balances will be restored automatically."
         confirmLabel={`Delete ${selected.size}`}
       />
     </div>

@@ -1,7 +1,18 @@
 import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/session";
 import { getUserBudgets, getUserGoals, loadAnalyticsTxns, applyDueRecurrings } from "@/lib/queries";
-import { budgetStatuses, categoryBreakdown, expensesIn, incomeIn, methodSplit, monthProjection, sameDayLastMonth } from "@/lib/analytics";
+import {
+  budgetStatuses,
+  categoryBreakdown,
+  expensesIn,
+  incomeIn,
+  methodSplit,
+  monthProjection,
+  sameDayLastMonth,
+  calculateFinancialHealthScore,
+  evaluateBadges,
+  loggingStreak,
+} from "@/lib/analytics";
 import { buildInsights } from "@/lib/ai/insights";
 import { serverError } from "@/lib/api";
 import { endOfMonth, startOfMonth, addMonths } from "@/lib/dates";
@@ -23,17 +34,20 @@ export async function GET() {
     const monthRange = { from: startOfMonth(now), to: now };
     const prevRange = { from: startOfMonth(addMonths(now, -1)), to: endOfMonth(addMonths(now, -1)) };
     const { slices } = categoryBreakdown(txns, monthRange, prevRange, 10);
+    const budgetStatus = budgetStatuses(txns, budgets, now);
+    const monthExpense = expensesIn(txns, monthRange);
+    const monthIncome = incomeIn(txns, monthRange);
 
     const insights = buildInsights({
       txns,
       now,
-      monthExpense: expensesIn(txns, monthRange),
-      monthIncome: incomeIn(txns, monthRange),
+      monthExpense,
+      monthIncome,
       prevMonthExpense: expensesIn(txns, prevRange),
       projection: monthProjection(txns, now),
       categories: slices,
       methods: methodSplit(txns, monthRange),
-      budgets: budgetStatuses(txns, budgets, now),
+      budgets: budgetStatus,
       goals: goals.map((g) => ({
         id: g.id,
         name: g.name,
@@ -45,12 +59,28 @@ export async function GET() {
       monthlyIncomeSetting: user.monthlyIncome,
     });
 
+    const financialHealth = calculateFinancialHealthScore({
+      txns,
+      budgets: budgetStatus,
+      monthlyIncome: user.monthlyIncome,
+      monthExpense,
+      monthIncome,
+      now,
+    });
+
+    const badges = evaluateBadges({
+      txns,
+      goals,
+      streak: loggingStreak(txns, now),
+    });
+
     return NextResponse.json({
       insights,
-      monthExpense: expensesIn(txns, monthRange),
-      // Comparing day-1 of this month with day-1 of last month is noise, not signal.
+      monthExpense,
       prevSameDay: now.getDate() >= 5 ? sameDayLastMonth(txns, now) : 0,
       projection: monthProjection(txns, now),
+      financialHealth,
+      badges,
     });
   } catch (error) {
     if (error instanceof Response) return error;

@@ -1,201 +1,205 @@
 # 🎓 CampuSpend
 
-**An AI expense tracker built for Indian college students.** Track UPI and cash side by side, log a
-transaction by typing what you did — _"bought chai rs 100"_, _"auto 50 cash kal"_, _"mom sent 5000"_ —
-and let the parser work out the amount, category, merchant, payment method and date.
+<div align="center">
 
-Everything runs on your own machine against a local SQLite file. No bank linking, no SMS
-permissions, no ads, no telemetry.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![100% Free & Open Source](https://img.shields.io/badge/Cost-100%25%20Free%20%26%20Open%20Source-success.svg)](#-100-free--local-first)
+[![Next.js 16](https://img.shields.io/badge/Next.js-16.3-black?logo=next.js)](https://nextjs.org/)
+[![React 19](https://img.shields.io/badge/React-19.2-blue?logo=react)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178c6?logo=typescript)](https://www.typescriptlang.org/)
+[![Tailwind CSS v4](https://img.shields.io/badge/Tailwind-v4-38bdf8?logo=tailwindcss)](https://tailwindcss.com/)
+[![SQLite](https://img.shields.io/badge/Database-Local%20SQLite%20(libSQL)-003B57?logo=sqlite)](https://github.com/tursodatabase/libsql)
+
+**An intelligent, privacy-first personal finance platform engineered for college students.**  
+Track UPI & cash effortlessly, parse natural Hinglish phrases, scan receipts, split expenses with roommates, and master your student finances with an offline AI financial coach.
+
+[**Quick Start**](#-quick-start) • [**Features**](#-features) • [**Architecture**](#-architecture) • [**Contributing**](#-contributing) • [**License**](#-license)
+
+---
+
+⭐ **Like this project?** Leave a star on GitHub — it's 100% free and helps other students discover it!
+
+</div>
+
+---
+
+## ⚡ Why CampuSpend?
+
+Indian college life is powered by micro-transactions: ₹20 tapri chai, ₹60 auto rickshaws, ₹150 canteen meals, shared flat groceries, and occasional ₹5,000 allowance transfers from home. Traditional finance apps demand tedious manual category forms, link to banking credentials, bombard you with credit card ads, or charge monthly subscriptions.
+
+**CampuSpend is built differently:**
+- **Zero Ads, Zero Subscriptions, 100% Free Forever.**
+- **Completely Local-First:** All transactions, budgets, and debts reside in your local SQLite database (`campuspend.db`).
+- **No Bank Linking or SMS Snooping:** Nothing scrapes your SMS inbox or accesses your bank account.
+- **Offline NLP Engine:** Parses everyday student shorthand (*"bought chai rs 100"*, *"auto 50 cash kal"*, *"mom sent 5000"*) entirely offline without requiring third-party API keys.
+
+---
+
+## 🚀 Quick Start
+
+Get up and running in under 60 seconds:
 
 ```bash
-git clone https://github.com/ArushSengar/CampuSpend.git && cd CampuSpend
+# 1. Clone the repository
+git clone https://github.com/ArushSengar/CampuSpend.git
+cd CampuSpend
+
+# 2. Install dependencies
 npm install
-npm run setup      # creates .env, runs migrations, seeds demo data
-npm run dev        # http://localhost:3000
+
+# 3. Setup database, run migrations, and seed realistic demo data
+npm run setup
+
+# 4. Launch the development server
+npm run dev
 ```
 
-Open it and you land straight in the **demo account** (`demo@campuspend.app` / `campuspend`) — five
-months of realistic data, already categorised.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-The login and signup screens are parked while auth gets rebuilt. Until they return, the app runs in
-**open demo mode**: with no session cookie, `getCurrentUser()` resolves you to the demo account, so
-the app works with or without cookies — including inside embedded previews that block them. Set
-`DEMO_OPEN_MODE=0` to require a real session again. The `signup` and `login` API routes are kept, so
-rebuilding the screens is a front-end job.
+> **💡 Instant Demo Sandbox:**  
+> Jump straight into the pre-loaded sandbox with 5+ months of realistic student spending:  
+> **Email:** `demo@campuspend.app`  
+> **Password:** `campuspend`  
+> (Or click **"1-Click Demo Sandbox"** on the login screen!)
 
 ---
 
-## ✨ What's inside
+## ✨ Features
 
-### The AI layer
+### 🤖 1. Natural-Language Quick Entry (AI Parser)
+Type your expenses the way you speak to friends. The built-in rule-based parsing engine decodes complex inputs instantly:
+- **Hinglish & College Shorthand:** `aaj`, `kal`, `parso`, `500 ka petrol`, `1.2k`, `2.5L`, `100/-`, `rs 100`, `mom sent 5000`.
+- **Multi-Transaction Lines:** `"chai 20 and auto 50 cash"` logs **two separate transactions** in a single tap.
+- **Smart Merchant & Method Inference:** Recognizes Swiggy, Zomato, Rapido, Blinkit, DMart, IRCTC, Netflix, and flags UPI (`GPay`, `PhonePe`, `Paytm`), `Cash`, or `Card`.
+- **Learns Your Habits:** If you routinely categorize your hostel warden under "Hostel & Rent", the engine adapts to your habits.
+- **Offline & Private:** Runs 100% locally with zero latency. (Optional: plug in `GEMINI_API_KEY` or `OPENAI_API_KEY` in `.env` for messy input fallback).
 
-| Feature | Detail |
-|---|---|
-| **Natural-language entry** | `bought chai rs 100` → ₹100 · Chai & Snacks · merchant "Chai" · today. One line, zero forms. |
-| **Multi-transaction lines** | "chai 20 and auto 50 cash" files **two** transactions in one go. |
-| **Hinglish & ₹ shorthand** | `aaj`, `kal`, `parso`, `500 ka petrol`, `1.2k`, `2.5L`, `100/-`, `rs 100`, `mom sent 5000` |
-| **Amounts** | `₹120`, `rs 120`, `120 rs`, `120 rupees`, `1.2k`, `1.5L`, `100/-` |
-| **Dates** | today, yesterday, `n days ago`, `last friday`, `12 aug`, `12/08`, `on 5th` |
-| **Direction** | `got/received/mom sent/salary/refund` → income; `paid/spent/bought` → expense |
-| **Method** | `upi`, `gpay`, `phonepe`, `paytm`, `cash`, `card`, `neft` |
-| **Merchants** | Brand lexicon (Zomato, Swiggy, Rapido, IRCTC, Netflix, Blinkit, DMart…) + `at X` / `to X` / `from X` patterns |
-| **Learns you** | If you always file "Hostel Warden" under Hostel & Rent, the parser copies you next time |
-| **Transparent** | Every parse shows a confidence score and _why_ it decided what it did — and every field is editable before saving |
-| **AI Coach** | Rule-generated insights (pace, budget risk, cash leakage, subscription audit, goal feasibility) computed from your real rows |
-| **Ask your money** | "where can I cut back?", "can I afford 5000?", "how much on chai last month?" — answered with your actual numbers |
-| **Bring your own LLM** | Set `OPENAI_API_KEY` or `GEMINI_API_KEY` for a second pass on messy input. Offline engine stays the default and validates every number. |
+### 📸 2. Bill & UPI Receipt Scanner
+- Drag & drop or paste (⌘V / Ctrl+V) transaction screenshots from GPay, PhonePe, Paytm, or paper canteen slips.
+- Extracts payment amount, merchant name, UTR number, and payment method automatically.
 
-> **No API key needed.** The parser (`src/lib/ai/parse.ts`) is a layered rule engine that runs
-> fully offline. An LLM is an optional upgrade, never a dependency.
+### 👥 3. Roommate & Peer Bill Splits (`/splits`)
+- Split hostel rent, WiFi bills, late-night food deliveries, and group trips.
+- Automatic balance reconciliation: see who owes you and who you owe at a glance.
+- 1-click settlement logging that updates both your friend's balance and your chosen wallet/bank balance.
+- Share quick WhatsApp settlement reminders with custom pre-filled debt breakdown texts.
 
-### Everything else you'd expect from a 2026 tracker
+### 🎯 4. Smart Budgets & Goal Feasibility
+- Category-level caps and overall monthly spending limits with real-time visual progress.
+- **Dynamic Safe Daily Spend:** Instantly computes how much you can spend per day for the remaining days of the month.
+- **Savings Goals:** Set targets (e.g., *Goa Trip*, *New Laptop*, *Semester Fees*) with target dates and feasible monthly contribution math.
 
-- **Auth** — email + password (bcrypt), signed JWT session cookie, route-level and API-level guards.
-- **Dashboard** — KPI cards, 30-day spend curve, category donut, income-vs-expense bars, budgets,
-  goals, UPI/cash split, top merchants, logging streak, AI insights, recent activity.
-- **Transactions** — full CRUD, search, filters (type / method / category / account / date range),
-  sort, pagination, **multi-select bulk delete**, CSV export.
-- **Budgets** — per-category or overall caps with safe / watch / over states and a "safe daily
-  spend for the rest of the month" hint.
-- **Goals** — targets with deadlines, quick-contribute buttons, feasibility maths.
-- **Recurring** — rent, mess, recharges, subscriptions. Due rules are logged automatically and can
-  be paused or run on demand.
-- **Accounts** — UPI wallets, cash in hand, bank, card. Balances move as you log transactions.
-- **Splits** — mark an expense as shared with roommates and record who owes what.
-- **Categories** — 25 student-flavoured defaults, fully editable, with emoji + colour pickers.
-- **Settings** — profile, expected monthly income, category CRUD, CSV export, demo-data loader,
-  and a "delete everything" escape hatch.
+### 📊 5. Apple-Inspired Dashboard & Financial Health Score
+- **0–100 Financial Health Metric:** Evaluates savings rate, budget discipline, cash leakage, and recurring load.
+- **Student Badges:** Unlock achievements like *Campus Minimalist*, *Budget Guardian*, *Goal Getter*, and *Logging Streak Master*.
+- **Hand-Crafted Custom SVG Visualizations:** 30-day spend curves, income vs. expense comparisons, category donut charts, and weekday vs. weekend ratios (no bloated chart libraries).
 
-### Interface details
+### 🧾 6. Printable Statement & Ledger Export
+- Need to show parents your semester spending or request hostel reimbursements?
+- Generate a clean, verified **Monthly Financial Statement** with itemized breakdowns, ready for PDF export or printing with 1 click.
 
-- Sidebar navigation with a collapsible mobile drawer, sticky topbar and per-page titles.
-- **⌘K command palette** — jump anywhere, add an expense, switch theme, export, log out.
-- **Empty states** that explain what to do next, **skeleton loading** on every data view, and
-  **optimistic updates** (deletes, goal contributions, budget edits) with rollback on failure.
-- Light/dark themes, glassy cards, custom SVG charts (no chart library), responsive from 360px up,
-  keyboard-friendly, `prefers-reduced-motion` respected.
+### 🔄 7. Subscriptions & Recurring Bills
+- Never miss hostel rent, mess fees, or recharges again.
+- Set intervals (monthly, weekly, bi-weekly) and let CampuSpend alert you or automatically apply due payments.
+
+### 💳 8. Multi-Account Management
+- Track UPI wallets (GPay, PhonePe, Paytm), cash in hand, bank accounts, and credit cards.
+- Balances reconcile automatically as you record transactions or settlements.
+
+### ⌨️ 9. Command Palette (⌘K)
+- Press `⌘K` (or `Ctrl+K`) anywhere to search pages, quickly log expenses or income, toggle themes, or download CSV data.
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ Architecture & Tech Stack
 
 ```
-src/
-├─ app/
-│  ├─ (app)/                  authenticated shell + pages
-│  │  ├─ dashboard/           server-rendered overview + client charts
-│  │  ├─ transactions/        full CRUD, filters, bulk actions
-│  │  ├─ insights/            AI coach: insights + ask-anything chat
-│  │  ├─ budgets/ goals/ recurring/ accounts/ settings/
-│  └─ api/                    REST endpoints (see below)
-├─ components/
-│  ├─ ai/quick-add.tsx        the natural-language entry bar
-│  ├─ charts/                 hand-rolled SVG area, donut, bar charts
-│  ├─ dashboard/ insights-panel / kpi-card
-│  ├─ shell/                  sidebar, topbar, command palette
-│  ├─ transactions/           row, feed, create/edit modal
-│  └─ ui/                     button, card, input, modal, toast, skeleton…
-├─ db/                        Drizzle schema + libSQL client
-├─ lib/
-│  ├─ ai/                     parse.ts (rules) · llm.ts (optional) · insights.ts · ask.ts
-│  ├─ analytics.ts            all dashboard maths
-│  ├─ taxonomy.ts             categories + merchant lexicon
-│  ├─ demo.ts                 deterministic demo-data generator
-│  └─ queries.ts              typed data access + recurring runner
-└─ proxy.ts                   Next 16 proxy: session gate
+CampuSpend/
+├── src/
+│   ├── app/
+│   │   ├── (app)/              # Authenticated application shell & pages
+│   │   │   ├── dashboard/      # Financial overview, health score, badges, charts
+│   │   │   ├── transactions/   # Filterable ledger, search, multi-select bulk delete
+│   │   │   ├── splits/         # Roommate bill splitting & debt settlement
+│   │   │   ├── insights/       # AI Coach & financial Q&A chat
+│   │   │   ├── budgets/        # Category spending caps & safe daily pace
+│   │   │   ├── goals/          # Savings targets & feasibility math
+│   │   │   ├── recurring/      # Recurring subscriptions & automated due runner
+│   │   │   ├── accounts/       # Wallets, cash, and bank account balances
+│   │   │   └── settings/       # Profile, monthly income, category customization
+│   │   ├── api/                # REST API routes (auth, transactions, splits, ai...)
+│   │   ├── login/              # Sign in page with 1-click demo access
+│   │   └── signup/             # Account registration page
+│   ├── components/
+│   │   ├── ai/                 # Quick-Add natural language bar, Receipt Scanner
+│   │   ├── dashboard/          # KPI cards, Statement modal, Charts
+│   │   ├── shell/              # Responsive sidebar, topbar, Command Palette (⌘K)
+│   │   └── ui/                 # Button, Card, Input, Modal, Toast, Skeleton
+│   ├── db/                     # Drizzle ORM schema & LibSQL client
+│   └── lib/                    # Analytics math, AI parser, money formatting, session
+├── tests/                      # JSDOM client component smoke tests
+└── drizzle/                    # Database migration scripts
 ```
 
-**Stack:** Next.js 16 (App Router, Turbopack) · React 19 · TypeScript · Tailwind CSS v4 ·
-Drizzle ORM + libSQL (SQLite file) · `jose` sessions · `bcryptjs` · `zod` · lucide icons.
-
-**Money:** every column is stored in **paise** (integers) — no floating-point drift. Conversion
-happens only at the UI/API boundary in `src/lib/money.ts`.
-
-### Data model
-
-`users` · `accounts` · `categories` · `transactions` · `budgets` · `goals` · `recurrings`
-(see `src/db/schema.ts`). Migrations live in `drizzle/`.
-
-### API
-
-| Method | Route | Purpose |
-|---|---|---|
-| `POST` | `/api/auth/signup` · `/api/auth/login` · `/api/auth/logout` | session management (kept — the screens are parked) |
-| `GET` | `/api/auth/session` | current user |
-| `GET/POST/DELETE` | `/api/transactions` | list (filters, search, sort, paging) · create · bulk delete |
-| `GET/PATCH/DELETE` | `/api/transactions/[id]` | read · update · delete (balances reconciled) |
-| `GET/POST` · `PATCH/DELETE` | `/api/categories`, `/api/accounts`, `/api/budgets`, `/api/goals`, `/api/recurring` | full CRUD |
-| `POST` | `/api/goals/[id]` | contribute / withdraw |
-| `POST` | `/api/recurring/apply` | materialise due rules |
-| `POST` | `/api/ai/parse` | natural language → structured transactions |
-| `POST` | `/api/ai/ask` | natural-language question → computed answer |
-| `GET` | `/api/insights`, `/api/overview` | insight cards · full dashboard payload |
-| `GET` | `/api/export` | CSV download |
-| `POST` | `/api/demo` | load / reset / clear demo data |
-| `PATCH` | `/api/user/profile` | profile + monthly income |
+- **Framework:** Next.js 16 (App Router, Turbopack)
+- **UI & State:** React 19, Tailwind CSS v4, Lucide Icons
+- **Database & ORM:** Local SQLite via LibSQL + Drizzle ORM
+- **Authentication:** Signed JWT sessions (`jose`), salted passwords (`bcryptjs`)
+- **Validation:** Zod schemas
+- **Monetary Precision:** Stored exclusively in integer **paise** (1 INR = 100 paise) to eliminate floating-point math errors.
 
 ---
 
-## 🚀 Scripts
+## 🔒 100% Free & Local-First
 
-| Command | What it does |
-|---|---|
-| `npm run dev` | Dev server (auto-creates `.env`, migrates and seeds first) |
-| `npm run build` / `npm start` | Production build / serve |
-| `npm run setup` | `ensure-env` + migrate + seed |
-| `npm run db:generate` | Regenerate migrations after editing `src/db/schema.ts` |
-| `npm run db:migrate` · `db:seed` · `db:reset` | Migrate · seed demo · drop-and-rebuild |
-| `npm run typecheck` · `npm run lint` | `tsc --noEmit` · ESLint |
-| `npm run smoke` | Render-and-click smoke test (see below) |
+1. **No Hidden Paywalls:** Every feature is completely unlocked and free for everyone.
+2. **Your Data Stays With You:** The database is an SQLite file on your disk. You can back it up, delete it, or inspect it with any SQLite viewer at any time.
+3. **Works Fully Offline:** The AI natural-language parser, financial analytics, and debt management work without an internet connection.
 
-### `npm run smoke`
+---
 
-There isn't always a headless browser available, so `tests/smoke.mjs` mounts the **real client
-components** in jsdom against a running dev server and talks to the **real API**. It catches the
-things HTTP status codes can't: render crashes, effects that never settle, data that never reaches
-the DOM, and money formatting mistakes.
+## 🛠️ Development & Testing
 
 ```bash
-npm run dev                    # in one terminal
-npm run smoke                  # in another
-SMOKE_DUMP=/tmp/smoke npm run smoke   # also write each page's rendered text to /tmp/smoke
+# Run TypeScript compilation check
+npm run typecheck
+
+# Run full production build
+npm run build
+
+# Run automated client component & API smoke test suite
+npm run smoke
+
+# Regenerate database migrations after modifying schema
+npm run db:generate
+
+# Reset and re-seed the database
+npm run db:reset
 ```
 
-It logs in as the demo user, renders all eight pages, asserts real values appear (the exact
-formatted amounts on the transactions and goals pages, so a rupees/paise mix-up fails loudly),
-then drives the AI bar end to end: types `bought chai rs 100`, parses it, saves the transaction
-and deletes it again. Point it at an account with no data and it switches to an empty-state pass.
+---
 
-## ⚙️ Configuration
+## 🤝 Contributing
 
-`npm run setup` writes a `.env` for you. Everything has a working default — the app runs fully
-offline with no keys at all.
+Contributions make the open-source community an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**!
 
-| Variable | Default | What it does |
-|---|---|---|
-| `DATABASE_URL` | `file:./campuspend.db` | SQLite file. Swap in a Turso/libSQL URL to go hosted. |
-| `AUTH_SECRET` | generated per clone | Signs session JWTs. Regenerating it logs everyone out. |
-| `OPENAI_API_KEY` · `GEMINI_API_KEY` | unset | Optional second pass for messy Hinglish. Offline parser stays in charge. |
-| `DEMO_OPEN_MODE` | `1` | `0` requires a signed session again, instead of falling back to the demo account when there is no cookie. |
-| `COOKIE_SECURE` | auto | `1` forces `Secure; SameSite=None; Partitioned` on the session cookie — needed when the app is served over HTTPS inside an iframe (hosted previews, embedded demos). Unset on plain `http://localhost`, where `SameSite=Lax` is correct. |
-| `DEV_ALLOWED_ORIGINS` | auto | Extra dev hosts to allow, comma-separated. Hosted sandboxes (e2b/Codespaces) are detected automatically. |
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-`.env` is created for you on first run; `.env.example` documents every knob.
+---
 
-```env
-DATABASE_URL="file:./campuspend.db"
-AUTH_SECRET="auto-generated-on-first-run"
+## 📄 License
 
-# Optional — upgrades the parser. Offline engine is used when these are absent.
-# OPENAI_API_KEY=""
-# GEMINI_API_KEY=""
-```
+Distributed under the **MIT License**. See [`LICENSE`](./LICENSE) for more details.
 
-Set `DATABASE_URL` to a Turso/LibSQL URL (+ `DATABASE_AUTH_TOKEN`) to run against a hosted
-database — no code changes required.
+---
 
-## 🔒 Privacy
+<div align="center">
 
-All data lives in your own SQLite file. The AI parser, insights and Q&A run locally against that
-file; nothing leaves your machine unless you explicitly configure an LLM key, and even then only
-the single sentence being parsed is sent — never your history.
+Crafted with ❤️ for students everywhere.  
+**If you find CampuSpend useful, please give it a ⭐ on GitHub!**
+
+</div>

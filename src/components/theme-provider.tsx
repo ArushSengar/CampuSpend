@@ -12,10 +12,17 @@ export const themeScript = `(function(){try{var t=localStorage.getItem("${THEME_
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   // The inline theme script has already applied the stored theme to <html>
-  // before hydration, so we can read it straight from the DOM.
-  const [theme, setThemeState] = useState<Theme>(() =>
-    typeof document === "undefined" ? "dark" : document.documentElement.classList.contains("dark") ? "dark" : "light",
-  );
+  // before hydration, so we can read it straight from the DOM / localStorage.
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof document === "undefined") return "dark";
+    try {
+      const stored = localStorage.getItem(THEME_KEY) as Theme | null;
+      if (stored === "dark" || stored === "light") return stored;
+    } catch {
+      // ignore
+    }
+    return document.documentElement.classList.contains("dark") ? "dark" : "light";
+  });
 
   const setTheme = useCallback((t: Theme) => {
     setThemeState(t);

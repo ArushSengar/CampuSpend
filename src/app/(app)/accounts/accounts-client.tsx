@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { Banknote, CreditCard, Landmark, Pencil, Plus, Smartphone, Trash2, WalletCards } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Field, Input, Select } from "@/components/ui/input";
+import { Field, Input } from "@/components/ui/input";
 import { Modal, ConfirmDialog } from "@/components/ui/modal";
-import { Badge, EmptyState } from "@/components/ui/feedback";
+import { EmptyState } from "@/components/ui/feedback";
 import { useToast } from "@/components/ui/toast";
 import { useAppData } from "@/components/providers/app-data";
 import { api } from "@/lib/client/api";
@@ -46,7 +46,7 @@ export function AccountsClient() {
     type: "UPI",
     upiId: "",
     balance: "",
-    color: "#6366f1",
+    color: "#0071e3",
     isDefault: false,
   });
 
@@ -55,7 +55,7 @@ export function AccountsClient() {
     try {
       await reload();
     } catch (e) {
-      toast.error("Couldn't refresh accounts", e instanceof Error ? e.message : undefined);
+      toast.error("Refresh failed", e instanceof Error ? e.message : undefined);
     } finally {
       setRefreshing(false);
     }
@@ -70,7 +70,7 @@ export function AccountsClient() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: "", type: "UPI", upiId: "", balance: "", color: "#6366f1", isDefault: accounts.length === 0 });
+    setForm({ name: "", type: "UPI", upiId: "", balance: "", color: "#0071e3", isDefault: accounts.length === 0 });
     setModalOpen(true);
   };
 
@@ -109,7 +109,7 @@ export function AccountsClient() {
       await reload();
       router.refresh();
     } catch (e) {
-      toast.error("Couldn't save account", e instanceof Error ? e.message : undefined);
+      toast.error("Save failed", e instanceof Error ? e.message : undefined);
     } finally {
       setSaving(false);
     }
@@ -125,34 +125,39 @@ export function AccountsClient() {
       await reload();
       router.refresh();
     } catch (e) {
-      toast.error("Couldn't delete", e instanceof Error ? e.message : undefined);
+      toast.error("Delete failed", e instanceof Error ? e.message : undefined);
     } finally {
       setDeletingNow(false);
     }
   };
 
   return (
-    <div className="mx-auto max-w-[84rem] space-y-4">
+    <div className="mx-auto max-w-[84rem] space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
           <div>
-            <p className="text-[0.68rem] font-semibold uppercase tracking-wider text-subtle">Total across wallets</p>
-            <p className="tabular text-xl font-bold text-fg">{formatMoney(netWorth * 100)}</p>
+            <p className="text-[0.65rem] font-bold uppercase tracking-wider text-subtle">Total Liquid Balance</p>
+            <p className="tabular text-2xl font-black text-fg">{formatMoney(netWorth * 100)}</p>
           </div>
-          {["UPI", "CASH", "BANK", "CARD"].map((type) =>
-            byType.get(type) ? (
-              <Badge key={type} tone="neutral">
-                {type} {formatMoney((byType.get(type) ?? 0) * 100)}
-              </Badge>
-            ) : null,
-          )}
+          <div className="flex flex-wrap gap-1.5">
+            {["UPI", "CASH", "BANK", "CARD"].map((type) =>
+              byType.get(type) ? (
+                <span
+                  key={type}
+                  className="rounded-full border border-border/80 bg-surface-2/80 px-2.5 py-0.5 text-[0.65rem] font-bold text-muted"
+                >
+                  {type} {formatMoney((byType.get(type) ?? 0) * 100)}
+                </span>
+              ) : null,
+            )}
+          </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="secondary" onClick={() => void load()} loading={refreshing}>
+          <Button variant="secondary" size="sm" onClick={() => void load()} loading={refreshing} className="text-xs">
             Refresh
           </Button>
-          <Button onClick={openCreate} leftIcon={<Plus className="h-4 w-4" />}>
-            Add account
+          <Button size="sm" onClick={openCreate} leftIcon={<Plus className="h-3.5 w-3.5" />} className="text-xs">
+            Add Wallet
           </Button>
         </div>
       </div>
@@ -161,51 +166,58 @@ export function AccountsClient() {
         <Card>
           <EmptyState
             icon={<WalletCards className="h-5 w-5" />}
-            title="No accounts yet"
-            description="Add your GPay/PhonePe wallet, your cash in hand and your bank — balances update as you log transactions."
+            title="No wallets yet"
+            description="Add your GPay/PhonePe, Cash in hand, or Bank accounts."
             action={
               <Button onClick={openCreate} leftIcon={<Plus className="h-4 w-4" />}>
-                Add your first account
+                Add Wallet
               </Button>
             }
           />
         </Card>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
           {accounts.map((a) => {
             const Icon = ICONS[a.icon] ?? Smartphone;
             const typeMeta = ACCOUNT_TYPES.find((t) => t.value === a.type);
             return (
-              <Card key={a.id} className="animate-fade-up relative overflow-hidden p-4">
-                <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full opacity-10" style={{ background: a.color }} />
+              <Card key={a.id} className="animate-fade-up relative overflow-hidden p-4.5">
+                <div
+                  className="absolute -right-8 -top-8 h-24 w-24 rounded-full opacity-10 blur-xl"
+                  style={{ background: a.color }}
+                />
                 <div className="relative flex items-start justify-between gap-2">
                   <div className="flex min-w-0 items-center gap-3">
                     <span
-                      className="grid h-11 w-11 shrink-0 place-items-center rounded-xl"
-                      style={{ background: `${a.color}22`, color: a.color }}
+                      className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl shadow-sm border border-border/40"
+                      style={{ background: `${a.color}20`, color: a.color }}
                     >
                       <Icon className="h-5 w-5" />
                     </span>
                     <div className="min-w-0">
-                      <p className="flex items-center gap-1.5 truncate text-sm font-semibold text-fg">
+                      <p className="flex items-center gap-1.5 truncate text-xs font-bold text-fg">
                         {a.name}
-                        {a.isDefault ? <Badge tone="primary">default</Badge> : null}
+                        {a.isDefault ? (
+                          <span className="rounded-full bg-primary-soft px-1.5 py-0.2 text-[0.6rem] font-bold text-primary">
+                            Default
+                          </span>
+                        ) : null}
                       </p>
-                      <p className="truncate text-[0.68rem] text-subtle">{a.upiId ?? typeMeta?.hint ?? a.type}</p>
+                      <p className="truncate text-[0.65rem] text-subtle">{a.upiId ?? typeMeta?.hint ?? a.type}</p>
                     </div>
                   </div>
                   <div className="flex shrink-0 gap-1">
                     <Button variant="ghost" size="icon-sm" onClick={() => openEdit(a)} aria-label="Edit">
-                      <Pencil className="h-3.5 w-3.5" />
+                      <Pencil className="h-3 w-3" />
                     </Button>
                     <Button variant="ghost" size="icon-sm" onClick={() => setDeleting(a)} aria-label="Delete">
-                      <Trash2 className="h-3.5 w-3.5 text-danger" />
+                      <Trash2 className="h-3 w-3 text-danger" />
                     </Button>
                   </div>
                 </div>
 
-                <p className="tabular relative mt-4 text-2xl font-bold text-fg">{formatMoney(a.balance * 100)}</p>
-                <p className="mt-0.5 text-[0.68rem] text-subtle">{typeMeta?.label ?? a.type}</p>
+                <p className="tabular relative mt-3.5 text-2xl font-black text-fg">{formatMoney(a.balance * 100)}</p>
+                <p className="mt-0.5 text-[0.65rem] font-bold uppercase tracking-wider text-subtle">{typeMeta?.label ?? a.type}</p>
               </Card>
             );
           })}
@@ -215,22 +227,22 @@ export function AccountsClient() {
       <Modal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        title={editing ? "Edit account" : "Add account"}
-        description="Balances move automatically as you log income and expenses."
-        icon={<WalletCards className="h-4 w-4" />}
+        title={editing ? "Edit Account" : "Add Account"}
+        description="Balances update automatically with each transaction."
+        size="sm"
         footer={
           <div className="flex justify-end gap-2">
-            <Button variant="secondary" onClick={() => setModalOpen(false)}>
+            <Button variant="ghost" size="sm" onClick={() => setModalOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={save} loading={saving}>
-              {editing ? "Save changes" : "Add account"}
+            <Button size="sm" onClick={save} loading={saving}>
+              {editing ? "Save" : "Add"}
             </Button>
           </div>
         }
       >
-        <div className="space-y-4">
-          <Field label="Account name" required>
+        <div className="space-y-3.5">
+          <Field label="Account Name" required>
             <Input autoFocus value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="GPay" />
           </Field>
 
@@ -242,8 +254,10 @@ export function AccountsClient() {
                   type="button"
                   onClick={() => setForm((f) => ({ ...f, type: t.value }))}
                   className={cn(
-                    "rounded-xl border px-2 py-2 text-xs font-medium transition",
-                    form.type === t.value ? "border-primary bg-primary-soft text-primary" : "border-border bg-surface-2 text-muted hover:text-fg",
+                    "rounded-2xl border px-2.5 py-2 text-xs font-semibold transition pressable",
+                    form.type === t.value
+                      ? "border-primary bg-primary-soft text-primary shadow-sm"
+                      : "border-border/80 bg-surface-2/60 text-muted hover:text-fg",
                   )}
                 >
                   <span className="mr-1">{t.emoji}</span>
@@ -253,48 +267,23 @@ export function AccountsClient() {
             </div>
           </Field>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="UPI ID" hint={form.type === "UPI" ? "optional" : undefined}>
-              <Input
-                value={form.upiId}
-                onChange={(e) => setForm((f) => ({ ...f, upiId: e.target.value }))}
-                placeholder="you@okhdfcbank"
-                disabled={form.type !== "UPI"}
-              />
-            </Field>
-            <Field label="Current balance">
-              <Input
-                type="number"
-                value={form.balance}
-                onChange={(e) => setForm((f) => ({ ...f, balance: e.target.value }))}
-                leftIcon={<span className="text-sm font-semibold text-subtle">₹</span>}
-                placeholder="0"
-              />
-            </Field>
-          </div>
+          <Field label="Starting Balance (₹)">
+            <Input
+              type="number"
+              value={form.balance}
+              onChange={(e) => setForm((f) => ({ ...f, balance: e.target.value }))}
+              placeholder="0"
+              leftIcon={<span className="text-xs text-subtle">₹</span>}
+            />
+          </Field>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Field label="Colour">
-              <div className="flex flex-wrap gap-1.5">
-                {["#6366f1", "#22c55e", "#0ea5e9", "#8b5cf6", "#f59e0b", "#ef4444", "#ec4899", "#14b8a6"].map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => setForm((f) => ({ ...f, color: c }))}
-                    className={cn("h-8 w-8 rounded-lg border-2 transition", form.color === c ? "border-fg scale-110" : "border-transparent")}
-                    style={{ background: c }}
-                    aria-label={`Colour ${c}`}
-                  />
-                ))}
-              </div>
-            </Field>
-            <Field label="Default account">
-              <Select value={form.isDefault ? "yes" : "no"} onChange={(e) => setForm((f) => ({ ...f, isDefault: e.target.value === "yes" }))}>
-                <option value="no">No</option>
-                <option value="yes">Use by default</option>
-              </Select>
-            </Field>
-          </div>
+          <Field label="UPI ID / Account Handle">
+            <Input
+              value={form.upiId}
+              onChange={(e) => setForm((f) => ({ ...f, upiId: e.target.value }))}
+              placeholder="user@oksbi"
+            />
+          </Field>
         </div>
       </Modal>
 
@@ -303,8 +292,8 @@ export function AccountsClient() {
         onClose={() => setDeleting(null)}
         onConfirm={remove}
         loading={deletingNow}
-        title="Delete this account?"
-        message="Transactions logged to it are kept — they'll just show without a wallet."
+        title="Remove account?"
+        message={`Delete "${deleting?.name}"? Your past transactions will remain in ledger.`}
       />
     </div>
   );

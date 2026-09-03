@@ -253,17 +253,27 @@ export type BudgetStatus = {
   emoji: string;
   color: string;
   limit: number;
+  effectiveLimit: number;
+  rolloverAmount: number;
   spent: number;
   remaining: number;
   percent: number;
   status: "safe" | "watch" | "over";
   categoryId: string | null;
   period: string;
+  rollover?: boolean;
 };
 
 export function budgetStatuses(
   txns: AnalyticsTxn[],
-  budgets: { id: string; limit: number; period: string; categoryId: string | null; category: AnalyticsCategory | null }[],
+  budgets: {
+    id: string;
+    limit: number;
+    period: string;
+    rollover?: boolean;
+    categoryId: string | null;
+    category: AnalyticsCategory | null;
+  }[],
   now = new Date(),
 ): BudgetStatus[] {
   const monthStart = startOfMonth(now);
@@ -271,31 +281,300 @@ export function budgetStatuses(
   const daysInMonth = endOfMonth(now).getDate();
   const dayOfMonth = now.getDate();
 
+  const prevMonthRange = {
+    from: startOfMonth(subMonths(now, 1)),
+    to: endOfMonth(subMonths(now, 1)),
+  };
+
   return budgets.map((b) => {
     const from = b.period === "WEEKLY" ? weekStart : monthStart;
     const spent = sum(
       txns,
       (t) => isExpense(t) && t.occurredAt >= from && (b.categoryId ? t.categoryId === b.categoryId : true),
     );
-    const pct = safePercent(spent, b.limit);
+
+    // Rollover calculations
+    let rolloverAmount = 0;
+    if (b.rollover && b.period === "MONTHLY") {
+      const prevSpent = sum(
+        txns,
+        (t) =>
+          isExpense(t) &&
+          inRange(t, prevMonthRange) &&
+          (b.categoryId ? t.categoryId === b.categoryId : true),
+      );
+      if (b.limit > prevSpent) {
+        rolloverAmount = Math.min(b.limit, b.limit - prevSpent); // Rollover surplus
+      }
+    }
+
+    const effectiveLimit = b.limit + rolloverAmount;
+    const pct = safePercent(spent, effectiveLimit);
     // pace: how much of the period has elapsed
     const elapsedPct = b.period === "WEEKLY" ? ((now.getDay() + 1) / 7) * 100 : (dayOfMonth / daysInMonth) * 100;
     const status: BudgetStatus["status"] =
       pct >= 100 ? "over" : pct >= Math.max(75, elapsedPct + 10) ? "watch" : "safe";
+
     return {
       id: b.id,
       name: b.category?.name ?? "Overall spending",
       emoji: b.category?.emoji ?? "🎯",
       color: b.category?.color ?? "#6366f1",
       limit: b.limit,
+      effectiveLimit,
+      rolloverAmount,
       spent,
-      remaining: b.limit - spent,
+      remaining: effectiveLimit - spent,
       percent: Math.min(150, pct),
       status,
       categoryId: b.categoryId,
       period: b.period,
+      rollover: Boolean(b.rollover),
     };
   });
+}
+
+/* --------------------------- financial health score ------------------------- */
+
+export type HealthPillar = {
+  name: string;
+  score: number;
+  maxScore: number;
+  status: "good" | "fair" | "needs-work";
+  feedback: string;
+};
+
+export type FinancialHealthResult = {
+  score: number; // 0..100
+  grade: "A+" | "A" | "B" | "C" | "D";
+  title: string;
+  summary: string;
+  pillars: HealthPillar[];
+  topTips: string[];
+};
+
+export function calculateFinancialHealthScore(input: {
+  txns: AnalyticsTxn[];
+  budgets: BudgetStatus[];
+  monthlyIncome: number;
+  monthExpense: number;
+  monthIncome: number;
+  now?: Date;
+}): FinancialHealthResult {
+  const { txns, budgets, monthlyIncome, monthExpense, monthIncome, now = new Date() } = input;
+
+  // 1. Budget Adherence (0..30 points)
+  let budgetScore = 30;
+  let budgetFeedback = "All monthly spending targets on track!";
+  if (budgets.length > 0) {
+    const overCount = budgets.filter((b) => b.status === "over").length;
+    const watchCount = budgets.filter((b) => b.status === "watch").length;
+    budgetScore = Math.max(0, 30 - overCount * 12 - watchCount * 4);
+    if (overCount > 0) {
+      budgetFeedback = `${overCount} budget category is currently exceeded.`;
+    } else if (watchCount > 0) {
+      budgetFeedback = `${watchCount} budget category near threshold.`;
+    }
+  } else {
+    budgetScore = 20; // Default baseline when no budgets set
+    budgetFeedback = "Set monthly category caps to boost your score.";
+  }
+
+  // 2. Logging Consistency & Streak (0..30 points)
+  const streak = loggingStreak(txns, now);
+  let streakScore = 10;
+  let streakFeedback = "Log transactions daily to sharpen tracking.";
+  if (streak.current >= 14) {
+    streakScore = 30;
+    streakFeedback = `Legendary ${streak.current}-day tracking streak!`;
+  } else if (streak.current >= 7) {
+    streakScore = 25;
+    streakFeedback = `Strong ${streak.current}-day streak in progress.`;
+  } else if (streak.current >= 3) {
+    streakScore = 18;
+    streakFeedback = `${streak.current}-day streak. Keep it going!`;
+  }
+
+  // 3. Savings Rate & Buffer (0..25 points)
+  const expectedIncome = monthlyIncome > 0 ? monthlyIncome : monthIncome;
+  let savingsScore = 15;
+  let savingsFeedback = "Aim to keep 20%+ of your allowance unspent.";
+  if (expectedIncome > 0) {
+    const savingsRatio = (expectedIncome - monthExpense) / expectedIncome;
+    if (savingsRatio >= 0.25) {
+      savingsScore = 25;
+      savingsFeedback = `${Math.round(savingsRatio * 100)}% savings rate — exceptional student buffer!`;
+    } else if (savingsRatio >= 0.1) {
+      savingsScore = 18;
+      savingsFeedback = `Saving ~${Math.round(savingsRatio * 100)}% of monthly allowance.`;
+    } else if (savingsRatio >= 0) {
+      savingsScore = 12;
+      savingsFeedback = "Breaking even this month. Try trimming impulse orders.";
+    } else {
+      savingsScore = 5;
+      savingsFeedback = "Spending exceeds monthly allowance.";
+    }
+  }
+
+  // 4. Cash Discipline (0..15 points)
+  const monthRange = { from: startOfMonth(now), to: now };
+  const monthTxns = filterRange(txns, monthRange);
+  const cashSpend = sum(monthTxns, (t) => isExpense(t) && t.method === "CASH");
+  const cashRatio = monthExpense > 0 ? cashSpend / monthExpense : 0;
+  let cashScore = 15;
+  let cashFeedback = "Clean digital audit trail via UPI & cards.";
+  if (cashRatio > 0.5) {
+    cashScore = 6;
+    cashFeedback = "Over 50% cash spend — easy to lose track of receipts.";
+  } else if (cashRatio > 0.3) {
+    cashScore = 10;
+    cashFeedback = "Moderate cash usage. Note cash payments right away.";
+  }
+
+  const totalScore = Math.min(100, Math.max(0, budgetScore + streakScore + savingsScore + cashScore));
+
+  const grade: FinancialHealthResult["grade"] =
+    totalScore >= 90 ? "A+" : totalScore >= 80 ? "A" : totalScore >= 65 ? "B" : totalScore >= 50 ? "C" : "D";
+
+  const title =
+    totalScore >= 90
+      ? "Campus Financier 👑"
+      : totalScore >= 80
+        ? "Budget Master 🚀"
+        : totalScore >= 65
+          ? "On Solid Track 📈"
+          : totalScore >= 50
+            ? "Building Habits 🌱"
+            : "Needs Attention ⚠️";
+
+  const summary =
+    totalScore >= 80
+      ? "You have outstanding financial discipline for a college student!"
+      : "You're doing well. A few minor tweaks will help you save even more.";
+
+  const pillars: HealthPillar[] = [
+    {
+      name: "Budget Discipline",
+      score: budgetScore,
+      maxScore: 30,
+      status: budgetScore >= 24 ? "good" : budgetScore >= 16 ? "fair" : "needs-work",
+      feedback: budgetFeedback,
+    },
+    {
+      name: "Logging Habit",
+      score: streakScore,
+      maxScore: 30,
+      status: streakScore >= 24 ? "good" : streakScore >= 16 ? "fair" : "needs-work",
+      feedback: streakFeedback,
+    },
+    {
+      name: "Savings Rate",
+      score: savingsScore,
+      maxScore: 25,
+      status: savingsScore >= 18 ? "good" : savingsScore >= 12 ? "fair" : "needs-work",
+      feedback: savingsFeedback,
+    },
+    {
+      name: "Payment Trail",
+      score: cashScore,
+      maxScore: 15,
+      status: cashScore >= 12 ? "good" : cashScore >= 8 ? "fair" : "needs-work",
+      feedback: cashFeedback,
+    },
+  ];
+
+  const topTips: string[] = [];
+  if (budgetScore < 24) topTips.push("Review and adjust any budget categories in warning or over state.");
+  if (streakScore < 25) topTips.push("Keep a 7-day logging streak active using quick natural-language entries.");
+  if (savingsScore < 18) topTips.push("Cut back 1-2 restaurant deliveries this week to build your buffer.");
+  if (cashScore < 12) topTips.push("Log cash withdrawals or chai payments immediately.");
+  if (!topTips.length) topTips.push("Maintain your current logging and savings cadence!");
+
+  return {
+    score: totalScore,
+    grade,
+    title,
+    summary,
+    pillars,
+    topTips: topTips.slice(0, 2),
+  };
+}
+
+/* ------------------------------- achievements ------------------------------- */
+
+export type StudentBadge = {
+  id: string;
+  title: string;
+  emoji: string;
+  description: string;
+  unlocked: boolean;
+  progressText: string;
+};
+
+export function evaluateBadges(input: {
+  txns: AnalyticsTxn[];
+  goals: { targetAmount: number; savedAmount: number }[];
+  streak: { current: number; longest: number };
+}): StudentBadge[] {
+  const { txns, goals, streak } = input;
+
+  const totalTxns = txns.length;
+  const upiCount = txns.filter((t) => t.method === "UPI").length;
+  const upiRatio = totalTxns > 0 ? (upiCount / totalTxns) * 100 : 0;
+  const chaiTxns = txns.filter((t) => t.category?.slug === "chai");
+  const splitTxns = txns.filter((t) => Boolean(t.splits));
+  const goalFunded = goals.some((g) => g.savedAmount >= g.targetAmount * 0.75);
+
+  return [
+    {
+      id: "streak-7",
+      title: "Consistency Champion",
+      emoji: "🔥",
+      description: "Log expenses for 7+ days in a row",
+      unlocked: streak.longest >= 7,
+      progressText: `${streak.current}/7 days streak`,
+    },
+    {
+      id: "chai-master",
+      title: "Chai Regular",
+      emoji: "☕",
+      description: "Logged 5+ chai & tapri sessions",
+      unlocked: chaiTxns.length >= 5,
+      progressText: `${chaiTxns.length}/5 logged`,
+    },
+    {
+      id: "upi-ninja",
+      title: "UPI Power User",
+      emoji: "📱",
+      description: "Over 75% digital UPI transactions",
+      unlocked: upiRatio >= 75 && totalTxns >= 10,
+      progressText: `${Math.round(upiRatio)}% UPI rate`,
+    },
+    {
+      id: "roommate-diplomat",
+      title: "Roommate Diplomat",
+      emoji: "👥",
+      description: "Split expenses with friends",
+      unlocked: splitTxns.length >= 3,
+      progressText: `${splitTxns.length} splits logged`,
+    },
+    {
+      id: "goal-crusher",
+      title: "Goal Crusher",
+      emoji: "🎯",
+      description: "75%+ funded on a savings goal",
+      unlocked: goalFunded,
+      progressText: goalFunded ? "Unlocked!" : "In progress",
+    },
+    {
+      id: "century-club",
+      title: "Century Club",
+      emoji: "💯",
+      description: "Logged over 100 campus transactions",
+      unlocked: totalTxns >= 100,
+      progressText: `${totalTxns}/100 transactions`,
+    },
+  ];
 }
 
 /* ---------------------------------- snapshot -------------------------------- */

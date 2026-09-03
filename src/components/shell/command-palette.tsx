@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
 import { ArrowRight, CornerDownLeft, Moon, Plus, Search, Sparkles, Sun, Download, LogOut } from "lucide-react";
 import { NAV_ITEMS } from "./nav";
 import { cn } from "@/lib/cn";
@@ -23,6 +24,7 @@ export function CommandPalette({
   onClose: () => void;
   actions: Action[];
 }) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [index, setIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -34,7 +36,7 @@ export function CommandPalette({
       hint: n.hint,
       icon: n.icon,
       run: () => {
-        window.location.href = n.href;
+        router.push(n.href);
       },
     }));
     const all = [...actions, ...nav];

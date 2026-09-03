@@ -22,6 +22,7 @@ import { GoalsClient } from "@/app/(app)/goals/goals-client";
 import { InsightsClient } from "@/app/(app)/insights/insights-client";
 import { RecurringClient } from "@/app/(app)/recurring/recurring-client";
 import { SettingsClient } from "@/app/(app)/settings/settings-client";
+import { SplitsClient } from "@/app/(app)/splits/splits-client";
 import { TransactionsClient } from "@/app/(app)/transactions/transactions-client";
 import type { AppAccount, AppCategory, AppUser } from "@/components/providers/app-data";
 import type { Overview } from "@/lib/overview";
@@ -122,6 +123,7 @@ export async function runSmoke(): Promise<CaseResult[]> {
       expect: [firstGoal, "₹", formatMoney((goals.goals[0]?.savedAmount ?? 0) * 100)],
     },
     { name: "recurring", node: <RecurringClient />, expect: [firstRecurring] },
+    { name: "splits", node: <SplitsClient />, expect: ["Roommate", "₹"] },
     { name: "insights", node: <InsightsClient />, expect: [firstInsight] },
     { name: "accounts", node: <AccountsClient />, expect: ["GPay", "₹"] },
     { name: "settings", node: <SettingsClient />, expect: ["AI engine", "₹"] },

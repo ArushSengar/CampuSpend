@@ -4,27 +4,35 @@ import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { LoaderCircle } from "lucide-react";
 import { cn } from "@/lib/cn";
 
-type Variant = "primary" | "secondary" | "outline" | "ghost" | "danger" | "success" | "glass";
+type Variant = "primary" | "secondary" | "outline" | "ghost" | "danger" | "success" | "glass" | "pill";
 type Size = "xs" | "sm" | "md" | "lg" | "icon" | "icon-sm";
 
 const variants: Record<Variant, string> = {
   primary:
-    "bg-primary text-primary-fg hover:bg-primary-hover shadow-[0_1px_0_0_rgba(255,255,255,0.16)_inset,0_6px_18px_-8px_color-mix(in_oklab,var(--primary)_70%,transparent)]",
-  secondary: "bg-surface-2 text-fg hover:bg-surface-3 border border-border",
-  outline: "border border-border-strong bg-transparent text-fg hover:bg-surface-2",
-  ghost: "bg-transparent text-muted hover:bg-surface-2 hover:text-fg",
-  danger: "bg-danger text-white hover:brightness-110 dark:text-[#20050d]",
-  success: "bg-success text-white hover:brightness-110 dark:text-[#062012]",
-  glass: "bg-surface/70 backdrop-blur border border-border text-fg hover:bg-surface",
+    "bg-primary text-white hover:brightness-105 active:brightness-95 shadow-[0_1px_2px_rgba(0,0,0,0.1),0_4px_16px_-4px_color-mix(in_oklab,var(--primary)_50%,transparent)]",
+  secondary:
+    "bg-surface-2 text-fg hover:bg-surface-3 border border-border/80 backdrop-blur-md",
+  outline:
+    "border border-border bg-transparent text-fg hover:bg-surface-2",
+  ghost:
+    "bg-transparent text-muted hover:bg-surface-2/80 hover:text-fg",
+  danger:
+    "bg-danger text-white hover:brightness-110 active:brightness-95 shadow-[0_4px_16px_-4px_rgba(255,59,48,0.4)]",
+  success:
+    "bg-success text-white hover:brightness-110 active:brightness-95 shadow-[0_4px_16px_-4px_rgba(52,199,89,0.4)]",
+  glass:
+    "bg-surface/75 backdrop-blur-xl border border-border/80 text-fg hover:bg-surface hover:border-border",
+  pill:
+    "bg-surface-2 text-fg hover:bg-primary-soft hover:text-primary border border-border/60 rounded-full",
 };
 
 const sizes: Record<Size, string> = {
-  xs: "h-7 px-2.5 text-xs gap-1 rounded-lg",
-  sm: "h-9 px-3 text-sm gap-1.5 rounded-xl",
-  md: "h-10 px-4 text-sm gap-2 rounded-xl",
-  lg: "h-12 px-5 text-[0.95rem] gap-2 rounded-2xl",
-  icon: "h-10 w-10 rounded-xl",
-  "icon-sm": "h-8 w-8 rounded-lg",
+  xs: "h-7 px-2.5 text-xs gap-1 rounded-full font-medium",
+  sm: "h-8.5 px-3.5 text-xs gap-1.5 rounded-full font-semibold",
+  md: "h-10 px-4.5 text-sm gap-2 rounded-full font-semibold",
+  lg: "h-12 px-6 text-base gap-2.5 rounded-full font-semibold",
+  icon: "h-9.5 w-9.5 rounded-full",
+  "icon-sm": "h-7.5 w-7.5 rounded-full",
 };
 
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -45,9 +53,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       ref={ref}
       disabled={disabled || loading}
       className={cn(
-        "inline-flex items-center justify-center font-medium transition-all select-none",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]",
-        "disabled:opacity-50 disabled:pointer-events-none active:scale-[0.985]",
+        "inline-flex items-center justify-center transition-all duration-150 select-none cursor-pointer",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]",
+        "disabled:opacity-40 disabled:pointer-events-none active:scale-[0.96]",
         variants[variant],
         sizes[size],
         block && "w-full",
