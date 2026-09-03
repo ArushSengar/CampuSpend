@@ -187,7 +187,14 @@ export function AiQuickAdd({
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && !parsed) e.preventDefault();
+            if (e.key === "Enter") {
+              e.preventDefault();
+              if (!parsed) {
+                if (text.trim()) void runParse(text);
+              } else {
+                void saveAll();
+              }
+            }
           }}
           placeholder="Natural input — “chai 20”, “zomato 350 yesterday”, “mom sent 5000”"
           aria-label="Describe a transaction"
